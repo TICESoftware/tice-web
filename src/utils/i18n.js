@@ -1,8 +1,8 @@
 import VueI18n from 'vue-i18n';
 import Vue from 'vue';
-import messagesEN from '@/lang/en';
-import messagesDE from '@/lang/de';
-import Logger from '@/utils/Logger';
+import Logger from './Logger';
+import messagesEN from '../lang/en.json';
+import messagesDE from '../lang/de.json';
 
 Vue.use(VueI18n);
 const messages = { en: messagesEN, de: messagesDE };

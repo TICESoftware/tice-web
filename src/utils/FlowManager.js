@@ -1,6 +1,6 @@
-import api from '@/utils/APIRequestManager';
-import crypto from '@/utils/CryptoManager';
-import Logger from '@/utils/Logger';
+import api from './APIRequestManager';
+import crypto from './CryptoManager';
+import Logger from './Logger';
 
 const userlist = {};
 

@@ -1,11 +1,12 @@
 import _sodium from 'libsodium-wrappers';
-import { DoubleRatchet, Header } from 'double-ratchet.js';
-import { deriveHKDFKey } from 'hkdf.js';
-import { X3DH } from 'x3dh.js';
+import { DoubleRatchet, Header } from 'double-ratchet-ts';
+import { deriveHKDFKey } from 'sodium-hkdf';
+import { X3DH } from 'x3dh';
 import { ec as EC } from 'elliptic';
 import KeyEncoder from 'key-encoder';
-import api from '@/utils/APIRequestManager';
-import Logger from '@/utils/Logger';
+/* eslint-disable import/no-cycle */
+import api from './APIRequestManager';
+import Logger from './Logger';
 
 const info = 'TICE';
 const maxSkip = 5000;

@@ -19,9 +19,9 @@ import Mapbox from 'mapbox-gl';
 import {
     MglMap, MglMarker, MglNavigationControl, MglPopup,
 } from 'vue-mapbox';
-import MapMarkers from '@/components/MapMarkers';
-import iso3316 from '@/utils/iso3316';
-import countriesBoundingBoxes from '@/utils/countriesBoundingBoxes';
+import MapMarkers from './MapMarkers.vue';
+import iso3316 from '../utils/iso3316.json';
+import countriesBoundingBoxes from '../utils/countriesBoundingBoxes.json';
 
 class AutoFitToggleControl {
     constructor() {

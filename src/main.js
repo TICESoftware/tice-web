@@ -1,8 +1,8 @@
-/* eslint-disable import/first, import/newline-after-import */
+/* eslint-disable import/order, import/first, import/newline-after-import */
 import Vue from 'vue';
-import App from '@/App.vue';
+import App from './App.vue';
 
-import { i18n } from '@/utils/i18n';
+import { i18n } from './utils/i18n';
 
 import 'element-ui/lib/theme-chalk/index.css';
 import {
@@ -31,27 +31,27 @@ import VueTimeago from 'vue-timeago';
 import dateFnsDE from 'date-fns/locale/de';
 Vue.use(VueTimeago, { locale: 'de', autoUpdate: true, locales: { de: dateFnsDE } });
 
-import GroupInfo from '@/components/GroupInfo.vue';
+import GroupInfo from './components/GroupInfo.vue';
 Vue.component('group-info', GroupInfo);
 
-import api from '@/utils/APIRequestManager';
+import api from './utils/APIRequestManager';
 Vue.prototype.$api = api;
 
-import beekeeper from '@/utils/Beekeeper';
+import beekeeper from './utils/Beekeeper';
 Vue.prototype.$tracking = beekeeper;
 beekeeper.sessionStart(navigator.language);
 beekeeper.pageView();
 
-import crypto from '@/utils/CryptoManager';
+import crypto from './utils/CryptoManager';
 Vue.prototype.$crypto = crypto;
 
-import flow from '@/utils/FlowManager';
+import flow from './utils/FlowManager';
 Vue.prototype.$flow = flow;
 
-import groupmembers from '@/utils/GroupMemberManager';
+import groupmembers from './utils/GroupMemberManager';
 Vue.prototype.$groupmembers = groupmembers;
 
-import Logger from '@/utils/Logger';
+import Logger from './utils/Logger';
 Vue.prototype.$log = Logger;
 
 Vue.config.productionTip = false;

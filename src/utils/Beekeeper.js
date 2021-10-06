@@ -1,6 +1,6 @@
-import crypto from '@/utils/CryptoManager';
 import JSSHA from 'jssha';
-import Logger from '@/utils/Logger';
+import crypto from './CryptoManager';
+import Logger from './Logger';
 
 const beekeeperBaseURL = 'https://beekeeper.tice.app/';
 const product = process.env.VUE_APP_BEEKEEPER_PRODUCT;

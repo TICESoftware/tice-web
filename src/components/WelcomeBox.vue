@@ -37,8 +37,8 @@
 </template>
 
 <script>
-import About from '@/components/About.vue';
-import { setLanguage } from '@/utils/i18n';
+import About from './About.vue';
+import { setLanguage } from '../utils/i18n';
 
 export default {
     name: 'WelcomeBox',

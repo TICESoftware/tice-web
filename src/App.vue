@@ -17,16 +17,16 @@
 </template>
 
 <script>
-import WelcomeBox from '@/components/WelcomeBox.vue';
-import TitleBar from '@/components/TitleBar.vue';
-import About from '@/components/About.vue';
-import Chat from '@/components/Chat.vue';
-import ShareLocationButton from '@/components/ShareLocationButton';
+import WelcomeBox from './components/WelcomeBox.vue';
+import TitleBar from './components/TitleBar.vue';
+import About from './components/About.vue';
+import Chat from './components/Chat.vue';
+import ShareLocationButton from './components/ShareLocationButton.vue';
 
 export default {
     name: 'app',
     components: {
-        Map: () => import(/* webpackPrefetch: true */ '@/components/Map.vue'),
+        Map: () => import(/* webpackPrefetch: true */ './components/Map.vue'),
         WelcomeBox,
         TitleBar,
         Chat,

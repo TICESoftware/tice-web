@@ -37,8 +37,8 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faInstagram, faFacebookSquare, faTwitter } from '@fortawesome/free-brands-svg-icons';
-import { i18n } from '@/utils/i18n';
-import { getLogs } from '@/utils/Logger';
+import { i18n } from '../utils/i18n';
+import { getLogs } from '../utils/Logger';
 
 library.add(faInstagram, faFacebookSquare, faTwitter);
 

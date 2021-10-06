@@ -1,5 +1,6 @@
-import crypto from '@/utils/CryptoManager';
-import Logger from '@/utils/Logger';
+import Logger from './Logger';
+/* eslint-disable import/no-cycle */
+import crypto from './CryptoManager';
 
 const useTLS = process.env.VUE_APP_USE_TLS === 'true' ? 's' : '';
 const apiBaseURL = process.env.VUE_APP_API_URL;
