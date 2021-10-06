@@ -1,0 +1,7 @@
+.git
+!.git/HEAD
+!.git/refs
+*.Dockerfile
+.idea
+dist
+node_modules

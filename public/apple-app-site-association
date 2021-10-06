@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "6YK3KTLWQR.app.tice.TICE.production",
+          "6YK3KTLWQR.app.tice.TICE.preview",
+          "6YK3KTLWQR.app.tice.TICE.development",
+          "6YK3KTLWQR.app.tice.TICE.testing"
+        ],
+        "/": [
+          "/group/*"
+        ]
+      }
+    ]
+  }
+}
