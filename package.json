@@ -13,7 +13,7 @@
   },
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build && cp dist/en/index.html dist/",
     "lint:vue": "vue-cli-service lint --no-fix",
     "lint:tests": "eslint --no-fix test",
     "lint": "yarn run lint:vue && yarn run lint:tests",
