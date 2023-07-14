@@ -1,40 +1,48 @@
-<template>
-    <div id="shareLocationButtonContainer">
-      <el-button id="shareLocationButton" round v-on:click="updateShareLocationStatus">
-          <div id="shareLocationText">{{ shareLocationText }}</div>
-          <div id="shareLocationSubText">{{ shareLocationSubText }}</div>
-      </el-button>
-    </div>
-</template>
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useGroupMemberStore } from '@/stores/GroupMemberStore'
 
-<script>
-export default {
-    props: ['shareLocation', 'locationSharingUsers', 'group'],
-    computed: {
-        shareLocationText() {
-            return (this.shareLocation ? this.$t('shareLocationButton.shareLocationText.sharing') : this.$t('shareLocationButton.shareLocationText.notSharing'));
-        },
-        shareLocationSubText() {
-            if (this.shareLocation === true) {
-                return this.$t('shareLocationButton.shareLocationSubtext.stopSharing');
-            }
-            if (this.locationSharingUsers.length === 0) {
-                return '';
-            }
-            if (this.locationSharingUsers.length === 1) {
-                const userName = this.$groupmembers.getUsername(this.group, this.locationSharingUsers[0]);
-                return this.$t('shareLocationButton.shareLocationSubtext.oneSharing', { userName });
-            }
-            return this.$t('shareLocationButton.shareLocationSubtext.moreSharing');
-        },
-    },
-    methods: {
-        updateShareLocationStatus() {
-            this.$emit('update-share-location', !this.shareLocation);
-        },
-    },
-};
+const groupmembers = useGroupMemberStore()
+
+const { t } = useI18n();
+
+const props = defineProps(['shareLocation', 'locationSharingUsers', 'group'])
+const emit= defineEmits(['update-share-location'])
+
+const shareLocationText = computed(() => {
+  return (
+    props.shareLocation
+    ? t('shareLocationButton.shareLocationText.sharing')
+    : t('shareLocationButton.shareLocationText.notSharing'))
+})
+const shareLocationSubText = computed(() => {
+  if (props.shareLocation === true) {
+    return t('shareLocationButton.shareLocationSubtext.stopSharing');
+  }
+  if (props.locationSharingUsers.length === 0) {
+    return '';
+  }
+  if (props.locationSharingUsers.length === 1) {
+    const userName = groupmembers.getUsername(props.group, props.locationSharingUsers[0]);
+    return t('shareLocationButton.shareLocationSubtext.oneSharing', { userName });
+  }
+  return t('shareLocationButton.shareLocationSubtext.moreSharing');
+})
+
+function updateShareLocationStatus() {
+  emit('update-share-location', !props.shareLocation);
+}
 </script>
+
+<template>
+  <div id="shareLocationButtonContainer">
+    <el-button id="shareLocationButton" round v-on:click="updateShareLocationStatus">
+      <div id="shareLocationText">{{ shareLocationText }}</div>
+      <div id="shareLocationSubText">{{ shareLocationSubText }}</div>
+    </el-button>
+  </div>
+</template>
 
 <style scoped>
 #shareLocationButtonContainer {

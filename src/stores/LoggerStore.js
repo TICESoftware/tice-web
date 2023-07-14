@@ -1,3 +1,7 @@
+import { defineStore } from 'pinia'
+
+export const useLoggerStore = defineStore('logger', () => {
+
 const logs = [];
 const debugMode = window.location.href.indexOf('/tice.app/') === -1;
 
@@ -40,17 +44,28 @@ function log(logLevel, msg) {
     /* eslint-enable no-console */
 }
 
-export default {
-    trace: (msg) => log('TRACE', msg),
-    debug: (msg) => log('DEBUG', msg),
-    info: (msg) => log('INFO', msg),
-    warning: (msg) => log('WARNING', msg),
-    error: (msg) => log('ERROR', msg),
-};
-
-export function getLogs() {
-    if (logs.length > 0) {
-        return `Logs:\n\n${logs.join('\n')}`;
-    }
-    return '';
+function trace (msg) {
+  log('TRACE', msg)
 }
+function debug (msg) {
+  log('DEBUG', msg)
+}
+function info (msg) {
+  log('INFO', msg)
+}
+function warning (msg) {
+  log('WARNING', msg)
+}
+function error (msg) {
+  log('ERROR', msg)
+}
+
+function getLogs() {
+  if (logs.length > 0) {
+    return `Logs:\n\n${logs.join('\n')}`;
+  }
+  return '';
+}
+
+return { getLogs, trace, debug, info, warning, error }
+})

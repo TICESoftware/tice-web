@@ -1,205 +1,224 @@
-<template>
-    <el-dialog
-      :visible="dialogVisible"
-      :show-close="false" :before-close="()=>{}">
-        <div class="dialog-title">
-            <span v-if="initialLoading" style="color:rgba(255,255,255,0)">Loading...</span>
-            <template v-else>{{ title }}</template>
-            <img src="/tice_logo_hstack.png" @click="showAbout" alt="TICE" style="height:2em;float:right;cursor:pointer;">
-        </div>
-        <div v-loading="initialLoading" v-if="initialLoading" style="height:100px;"></div>
-        <group-info v-if="group != null && !reset && typeof group != 'string'" :group="group"/>
-        <p v-if="initialLoading === false && group !== 'notFound' && group !== 'error'">
-            <el-form ref="public-name" :model="publicNameForm" :hide-required-asterisk="true" @submit.native.prevent>
-                <el-form-item :label="$t('titleBar.settings.publicName')" :rules="[ { required: true, message: $t('welcome.name.required') } ]" prop="publicName">
-                    <el-input v-model="publicNameForm.publicName"/>
-                </el-form-item>
-                <el-switch v-model="sharingLocation" style="margin-right:1em;"></el-switch> {{ $t("welcome.switch.shareLocation") }}
-                <el-button type="primary" native-type="submit" @click="start" :loading="buttonLoading">
-                    <template v-if="group == null || typeof group == 'string'">{{ $t("welcome.button.reload") }}</template>
-                    <template v-else>{{ $t("welcome.button.join") }}</template>
-                </el-button><br><br>
-            </el-form>
-            <template v-if="group !== null && typeof group !== 'string'">
-                <small>{{ $t("welcome.cookies") }} <a href="https://ticeapp.com/datenschutz" target="_blank">{{ $t("welcome.privacyNotice") }}</a></small>
-            </template>
-        </p>
-        <template v-if="webViewOniOS && group !== 'notFound' && group !== 'error'">
-            <p>
-                <el-button type="default" @click="openDeepLink">
-                    {{ $t("welcome.openInApp") }}
-                </el-button>
-            </p><p>
-                <a href="https://apps.apple.com/de/app/tice-secure-location-sharing/id1494324936"><img src="/app-store-download.png" style="width:60%;"></a>
-            </p>
-        </template>
-    </el-dialog>
-</template>
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import GroupInfo from './GroupInfo.vue'
+import { useI18n } from 'vue-i18n'
+import { useLoggerStore } from '@/stores/LoggerStore'
+import { useGroupMemberStore } from '@/stores/GroupMemberStore'
+import { useFlowStore } from '@/stores/FlowStore'
+import { useAPIRequestStore } from '@/stores/APIRequestStore'
+import { ElMessage } from 'element-plus/es/components/index.js'
+// import { useCryptoStore } from '@/stores/CryptoStore'
+// import { setLanguage } from '../utils/i18n'
+// import About from './About.vue'
 
-<script>
-import About from './About.vue';
-import { setLanguage } from '../utils/i18n';
+const groupmembers = useGroupMemberStore()
+const log = useLoggerStore()
+const flow = useFlowStore()
+const api = useAPIRequestStore()
+// const crypto = useCryptoStore()
 
-export default {
-    name: 'WelcomeBox',
-    props: ['reset'],
-    data() {
-        return {
-            refl_dialogVisible: true,
-            buttonLoading: false,
-            group: null,
-            user: null,
-            title: null,
-            publicNameForm: { publicName: '' },
-            sharingLocation: true,
-        };
-    },
-    computed: {
-        groupMemberNames() {
-            if (this.group == null) { return []; }
-            return Object.keys(this.group.members).map((id) => this.$groupmembers.getUsername(this.group, id));
-        },
-        initialLoading() {
-            return this.reset === true || this.group === null;
-        },
-        dialogVisible() {
-            return this.reset === true || this.refl_dialogVisible === true;
-        },
-        webViewOniOS() {
-            const ua = window.navigator.userAgent.toLowerCase();
-            return /iphone|ipod|ipad/.test(ua);
-        },
-    },
-    async created() {
-        await setLanguage(new Intl.Locale(navigator.language).language);
+const { t } = useI18n();
 
-        if (window.location.pathname.length < 5) {
-            window.location.href = 'https://ticeapp.com';
-            return;
-        }
-        const locsplit = window.location.pathname.split('/');
-        if (locsplit.length < 3 || locsplit[1] !== 'group' || window.location.hash.length < 10) {
-            this.title = this.$t('welcome.incorrectURL');
-            this.group = 'notFound';
-            return;
-        }
-        this.$tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
-        try {
-            this.$log.debug('Opened WebApp');
-            const groupId = locsplit[2];
-            const groupKey = await this.$crypto.prepareGroupKey(window.location.hash.substr(1));
+const props = defineProps(['reset'])
+const emit= defineEmits(['register-complete'])
 
-            this.$log.trace('Migrate old cookies');
-            await this.$crypto.migrateStorage(groupId);
+const refl_dialogVisible = ref(true)
+const buttonLoading = ref(false)
+const group = ref()
+const user = ref(null)
+const title = ref()
+const publicNameForm = ref({ publicName: '' })
+const sharingLocation = ref(true)
 
-            this.user = await this.$crypto.loadFromStorage(groupId);
-            if (this.user !== null) {
-                this.$log.info('Found user data in cookie');
-                this.$api.setAuthHeader(this.user);
-            } else {
-                this.$log.info('Creating new user');
-                this.user = await this.$flow.createUser();
-            }
+const groupMemberNames = computed(() => {
+  if (group.value == null) { return []; }
+  return Object.keys(group.value.members).map((id)=> groupmembers.getUsername(group.value, id))
+})
+const initialLoading = computed(() => {
+  return props.reset === true || group.value === null
+})
+const dialogVisible = computed(() => {
+  return props.reset === true || refl_dialogVisible.value === true
+})
+const webViewOniOS = computed(() => {
+  const ua = window.navigator.userAgent.toLowerCase()
+  return /iphone|ipod|ipad/.test(ua)
+})
 
-            const group = await this.$flow.prepareGroup(this.user, groupId, groupKey);
-            if (group.settings.name === undefined) {
-                const ownerName = this.$groupmembers.getUsername(group, group.settings.owner);
-                if (['x', 's', 'z'].indexOf(ownerName.slice(-1)) > -1) {
-                    group.settings.name = this.$t('welcome.groupName.s', { ownerName });
-                } else {
-                    group.settings.name = this.$t('welcome.groupName', { ownerName });
-                }
-            }
+// on created (async)
+//     await setLanguage(new Intl.Locale(navigator.language).language);
 
-            if (this.user.userId in group.members) {
-                this.buttonLoading = true;
-                this.$tracking.loadFromStorage();
-                this.$emit('register-complete', { user: this.user, group });
-                this.refl_dialogVisible = false;
-            } else {
-                this.title = group.settings.name;
-                this.group = group;
-            }
-        } catch (error) {
-            if ((`${error}`).indexOf('Group not found') > -1) {
-                this.$log.warning(`Group not found: ${window.location.href}`);
-                this.title = this.$t('welcome.groupDoesNotExist');
-                this.group = 'notFound';
-            } else if ((`${error}`).indexOf('groupMemberLimitExceeded') > -1) {
-                this.$log.warning('The group has exceeded the maximum member limit');
-                this.title = this.$t('welcome.groupMemberLimitExceeded');
-                this.group = 'error';
-            } else if ((`${error}`).indexOf('User Authentication failed') > -1) {
-                this.$log.warning('User authentication failed - probably user from cookie was deleted');
-                localStorage.clear();
-                window.location.reload();
-            } else {
-                this.$log.error(`Error on WB-created: ${error}`);
-                this.$message({
-                    type: 'error',
-                    message: this.$t('welcome.errorOccured') + error,
-                    showClose: true,
-                    duration: 0,
-                });
-                this.title = this.$t('welcome.error');
-                this.group = 'error';
-            }
-        } finally {
-            this.buttonLoading = false;
-        }
-    },
-    methods: {
-        openDeepLink() {
-            window.open(window.location.href.replace('https://', 'tice://'));
-        },
-        async start() {
-            this.buttonLoading = true;
-            if (this.group == null || typeof this.group === 'string') {
-                window.location.reload();
-                return;
-            }
+if (window.location.pathname.length < 5) {
+    window.location.href = 'https://ticeapp.com'
+}
+const locsplit = window.location.pathname.split('/');
+if (locsplit.length < 3 || locsplit[1] !== 'group' || window.location.hash.length < 10) {
+  title.value = t('welcome.incorrectURL')
+  group.value = 'notFound';
+}
+//     this.$tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
+// try {
+//   log.debug('Opened WebApp')
+//   const groupId = locsplit[2]
+//   // const groupKey = await $crypto.prepareGroupKey(window.location.hash.substr(1));
 
-            try {
-                await this.$refs['public-name'].validate().catch((result) => { if (!result) { throw Error('name-is-required'); } });
-                const { publicName } = this.publicNameForm;
-                await this.$api.user(this.user.userId).update({ publicName });
-                this.group = await this.$flow.addUserToGroup(this.user, this.group);
-                this.group.members[this.user.userId].info.publicName = publicName;
+//   log.trace('Migrate old cookies')
+//   // await $crypto.migrateStorage(groupId);
 
-                this.$tracking.registerComplete();
-                this.$emit('register-complete', { user: this.user, group: this.group, sharingLocation: this.sharingLocation });
-                this.refl_dialogVisible = false;
-            } catch (error) {
-                if (`${error}` === 'Error: invalidGroupTag:') {
-                    this.$message.info(this.$t('welcome.groupChanged'));
-                    const { groupId } = this.group;
-                    const { groupKey } = this.group;
-                    this.group = null;
-                    this.group = await this.$flow.prepareGroup(this.user, groupId, groupKey);
-                } else if (`${error}` === 'Error: name-is-required') {
-                    this.$message.error(this.$t('welcome.name.required'));
-                } else {
-                    this.$message.error(`${error}`);
-                    this.$log.error(`Error on WB-start: ${error}`);
-                }
-            } finally {
-                this.buttonLoading = false;
-            }
-        },
-        showAbout() {
-            this.$msgbox({
-                title: this.$t('about.title'),
-                message: this.$createElement(About),
-                closeOnClickModal: true,
-                closeOnPressEscape: true,
-                closeOnHashChange: false,
-                showConfirmButton: false,
-                showClose: true,
-            }).catch(() => {});
-        },
-    },
-};
+//   // user.value = await $crypto.loadFromStorage(groupId);
+//   if (user.value !== null) {
+//     log.info('Found user data in cookie')
+//       // this.$api.setAuthHeader(this.user);
+//   } else {
+//     log.info('Creating new user')
+//     user.value = await flow.createUser()
+//   }
+
+//   const group = await flow.prepareGroup(user.value, groupId, groupKey);
+//   if (group.value.settings.name === undefined) {
+//     const ownerName = groupmembers.getUsername(group.value, group.value.settings.owner);
+//     if (['x', 's', 'z'].indexOf(ownerName.slice(-1)) > -1) {
+//       group.value.settings.name = t('welcome.groupName.s', { ownerName });
+//     } else {
+//         group.value.settings.name = t('welcome.groupName', { ownerName });
+//     }
+//   }
+
+//   if (user.value.userId in group.value.members) {
+//     buttonLoading.value = true;
+//     // this.$tracking.loadFromStorage();
+//     // emit('register-complete', { user: this.user, group });
+//     refl_dialogVisible.value = false;
+//   } else {
+//       title.value = group.value.settings.name;
+//       group.value = group;
+//   }
+// } catch (error) {
+//   if ((`${error}`).indexOf('Group not found') > -1) {
+//     log.warning(`Group not found: ${window.location.href}`)
+//     title.value = t('welcome.groupDoesNotExist')
+//     group.value = 'notFound'
+//   } else if ((`${error}`).indexOf('groupMemberLimitExceeded') > -1) {
+//     log.warning('The group has exceeded the maximum member limit')
+//     title.value = t('welcome.groupMemberLimitExceeded')
+//     group.value = 'error'
+//   } else if ((`${error}`).indexOf('User Authentication failed') > -1) {
+//     log.warning('User authentication failed - probably user from cookie was deleted')
+//     localStorage.clear()
+//     window.location.reload()
+//   } else {
+//     log.error(`Error on WB-created: ${error}`)
+//     // this.$message({
+//     //     type: 'error',
+//     //     message: this.$t('welcome.errorOccured') + error,
+//     //     showClose: true,
+//     //     duration: 0,
+//     // });
+//     title.value = t('welcome.error');
+//     group.value = 'error';
+//   }
+// } finally {
+//   buttonLoading.value = false;
+// }
+
+function openDeepLink() {
+  window.open(window.location.href.replace('https://', 'tice://'));
+}
+async function start() {
+  buttonLoading.value = true;
+  if (group.value == null || typeof group.value === 'string') {
+      window.location.reload();
+      return;
+  }
+
+  try {
+      // await this.$refs['public-name'].validate().catch((result) => { if (!result) { throw Error('name-is-required'); } });
+      const { publicName } = publicNameForm.value
+      await api.user(user.value.userId).update({ publicName });
+      group.value = await flow.addUserToGroup(user.value, group.value);
+      group.value.members[user.value.userId].info.publicName = publicName;
+
+      // this.$tracking.registerComplete();
+      emit('register-complete', { user: user.value, group: group.value, sharingLocation: sharingLocation.value });
+      refl_dialogVisible.value = false;
+  } catch (error) {
+      if (`${error}` === 'Error: invalidGroupTag:') {
+          // this.$message.info(this.$t('welcome.groupChanged'));
+          const { groupId } = group.value;
+          const { groupKey } = group.value;
+          group.value = null;
+          group.value = await flow.prepareGroup(user.value, groupId, groupKey);
+      } else if (`${error}` === 'Error: name-is-required') {
+          // this.$message.error(this.$t('welcome.name.required'));
+      } else {
+          // this.$message.error(`${error}`);
+          log.error(`Error on WB-start: ${error}`);
+      }
+  } finally {
+      buttonLoading.value = false;
+  }
+}
+function showAbout() {
+  // this.$msgbox({
+  //     title: this.$t('about.title'),
+  //     message: this.$createElement(About),
+  //     closeOnClickModal: true,
+  //     closeOnPressEscape: true,
+  //     closeOnHashChange: false,
+  //     showConfirmButton: false,
+  //     showClose: true,
+  // }).catch(() => {});
+}
 </script>
+
+<template>
+  <el-dialog
+    v-model="dialogVisible"
+    :show-close="false"
+    :before-close="()=>{}"
+  >
+    <div class="dialog-title">
+      <span v-if="initialLoading" style="color:rgba(255,255,255,0)">Loading...</span>
+      <template v-else>{{ title }}</template>
+      <img src="/tice_logo_hstack.png" @click="showAbout" alt="TICE" style="height:2em;float:right;cursor:pointer;">
+    </div>
+    <div v-loading="initialLoading" v-if="initialLoading" style="height:100px;"></div>
+    <!-- <GroupInfo
+      v-if="group != null && !reset && typeof group != 'string'"
+      :group="group" 
+    />
+    <p v-if="initialLoading === false && group !== 'notFound' && group !== 'error'">
+      <el-form ref="public-name" :model="publicNameForm" :hide-required-asterisk="true" @submit.native.prevent>
+          <el-form-item :label="t('titleBar.settings.publicName')" :rules="[ { required: true, message: t('welcome.name.required') } ]" prop="publicName">
+              <el-input v-model="publicNameForm.publicName"/>
+          </el-form-item>
+          <el-switch v-model="sharingLocation" style="margin-right:1em;"></el-switch> {{ t("welcome.switch.shareLocation") }}
+          <el-button type="primary" native-type="submit" @click="start" :loading="buttonLoading">
+              <template v-if="group == null || typeof group == 'string'">{{ t("welcome.button.reload") }}</template>
+              <template v-else>{{ t("welcome.button.join") }}</template>
+          </el-button><br><br>
+      </el-form>
+      <template v-if="group !== null && typeof group !== 'string'" >
+        <small>
+          {{ t("welcome.cookies") }} 
+          <a href='https://ticeapp.com/datenschutz' target='_blank'>
+            {{ t("welcome.privacyNotice") }}
+          </a>
+        </small>
+      </template>
+    </p>
+    <template v-if="webViewOniOS && group !== 'notFound' && group !== 'error'">
+      <p>
+        <el-button type="default" @click="openDeepLink">
+          {{ t("welcome.openInApp") }}
+        </el-button>
+      </p>
+      <p>
+        <a href="https://apps.apple.com/de/app/tice-secure-location-sharing/id1494324936"><img src="/app-store-download.png" style="width:60%;"></a>
+      </p>
+    </template> -->
+  </el-dialog>
+</template>
 
 <style scoped>
     .text-left {

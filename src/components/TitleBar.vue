@@ -1,111 +1,119 @@
-<template>
-    <div id="titlebar" :class="{ 'hide': initialLoading }"><div>
-        <span role="link" class="groupname" @click="showGroupInfo">{{ groupname }}</span>
-        <span role="link" class="username" @click="showUserSettings">
-            <span class="avatar" :style="{ 'background-color': usercolor, 'margin': '0 1em' }">{{ initials }}</span>
-            {{ username }}
-        </span>
-    </div></div>
-</template>
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useGroupMemberStore } from '@/stores/GroupMemberStore'
+import { ElMessageBox } from 'element-plus'
 
-<script>
-export default {
-    props: ['user', 'group', 'initialLoading', 'shareLocation', 'locationSharingUsers'],
-    computed: {
-        username() {
-            if (this.user.userId == null || this.group == null) {
-                return '';
-            }
-            return this.$groupmembers.getUsername(this.group, this.user.userId);
-        },
-        usercolor() {
-            if (this.user.userId == null) {
-                return '#ccc';
-            }
-            return this.$groupmembers.getColor(this.user.userId);
-        },
-        initials() {
-            if (this.username === '') {
-                return '';
-            }
-            return this.$groupmembers.getInitials(this.username);
-        },
-        groupname() {
-            if (this.group == null) {
-                return '';
-            }
-            return this.group.settings.name;
-        },
-    },
-    methods: {
-        showGroupInfo() {
-            this.$tracking.screen('GroupInfo');
-            this.$msgbox({
-                message: this.$createElement('group-info', {
-                    props: {
-                        group: this.group, userId: this.user.userId, locationSharingUsers: this.locationSharingUsers, shareLocation: this.shareLocation,
-                    },
-                }),
-                title: this.groupname,
-                closeOnClickModal: true,
-                closeOnPressEscape: true,
-                closeOnHashChange: false,
-                showConfirmButton: false,
-                showClose: true,
-            }).catch(() => {});
-        },
-        showUserSettings() {
-            this.$tracking.screen('UserSettings');
-            const h = this.$createElement;
-            this.$msgbox({
-                message: h('div', [
-                    h('div', { style: { marginBottom: '1em' } }, [
-                        h('el-button', {
-                            props: { type: 'text' },
-                            on: {
-                                click: () => {
-                                    this.$emit('teardown', { reload: true });
-                                },
-                            },
-                        }, this.$t('titleBar.settings.deleteData')),
-                    ]),
-                    h('div', this.$t('titleBar.settings.publicName')),
-                ]),
-                title: this.$t('titleBar.settings.title'),
-                showInput: true,
-                inputPlaceholder: this.$groupmembers.getUsername(this.group, this.user.userId),
-                closeOnClickModal: true,
-                closeOnPressEscape: true,
-                closeOnHashChange: false,
-                showConfirmButton: false,
-                showClose: true,
-                beforeClose: (action, instance, done) => {
-                    const newName = instance.$refs.input.value;
-                    const oldName = this.$groupmembers.getUsername(this.group, this.user.userId);
-                    if (instance.loading === true || newName === null || newName === oldName) {
-                        done();
-                    } else {
-                        instance.loading = true;
-                        const loading = this.$loading({ target: instance.$el.childNodes[0] });
-                        this.$api.user(this.user.userId).update({ publicName: newName })
-                            .then(() => {
-                                this.$emit('update-username', newName);
-                                done();
-                            }).catch((error) => {
-                                this.$message.error(`${error}`);
-                                this.$log.error(`Couldn't update user: ${error}`);
-                            })
-                            .finally(() => {
-                                loading.close();
-                                instance.loading = false;
-                            });
-                    }
-                },
-            }).catch(() => {});
-        },
-    },
-};
+const groupmembers = useGroupMemberStore()
+
+const props = defineProps(['user', 'group', 'initialLoading', 'shareLocation', 'locationSharingUsers'])
+const emit= defineEmits(['teardown', 'update-username'])
+
+const username = computed(() => {
+  // if (props.user.userId == null || props.group == null) {
+  //     return '';
+  // }
+  // return $groupmembers.getUsername(props.group, props.user.userId);
+  return 'Test Person' // exchange with lines before
+})
+const usercolor = computed(() => {
+  if (props.user.userId == null) {
+      return '#ccc';
+  }
+  return groupmembers.getColor(props.user.userId);
+})
+const initials = computed(() => {
+    if (username.value === '') {
+        return '';
+    }
+    return groupmembers.getInitials(username.value);
+})
+const groupname = computed(() => {
+    if (props.group == null) {
+        return '';
+    }
+    // return props.group.settings.name
+    return props.group // exchange with line before
+})
+
+function showGroupInfo() {
+  // this.$tracking.screen('GroupInfo');
+  // $msgbox({
+      // message: this.$createElement('group-info', {
+      //     props: {
+      //         group: this.group, userId: this.user.userId, locationSharingUsers: this.locationSharingUsers, shareLocation: this.shareLocation,
+      //     },
+      // }),
+  //     title: groupname.value,
+  //     closeOnClickModal: true,
+  //     closeOnPressEscape: true,
+  //     closeOnHashChange: false,
+  //     showConfirmButton: false,
+  //     showClose: true,
+  // }).catch(() => {});
+}
+
+function showUserSettings() {
+  // this.$tracking.screen('UserSettings');
+  // const h = this.$createElement;
+  // this.$msgbox({
+  //     message: h('div', [
+  //         h('div', { style: { marginBottom: '1em' } }, [
+  //             h('el-button', {
+  //                 props: { type: 'text' },
+  //                 on: {
+  //                     click: () => {
+  //                         emit('teardown', { reload: true });
+  //                     },
+  //                 },
+  //             }, this.$t('titleBar.settings.deleteData')),
+  //         ]),
+  //         h('div', this.$t('titleBar.settings.publicName')),
+  //     ]),
+  //     title: this.$t('titleBar.settings.title'),
+  //     showInput: true,
+  //     inputPlaceholder: this.$groupmembers.getUsername(this.group, this.user.userId),
+  //     closeOnClickModal: true,
+  //     closeOnPressEscape: true,
+  //     closeOnHashChange: false,
+  //     showConfirmButton: false,
+  //     showClose: true,
+  //     beforeClose: (action, instance, done) => {
+  //         const newName = instance.$refs.input.value;
+  //         const oldName = this.$groupmembers.getUsername(this.group, this.user.userId);
+  //         if (instance.loading === true || newName === null || newName === oldName) {
+  //             done();
+  //         } else {
+  //             instance.loading = true;
+  //             const loading = this.$loading({ target: instance.$el.childNodes[0] });
+  //             this.$api.user(this.user.userId).update({ publicName: newName })
+  //                 .then(() => {
+  //                     emit('update-username', newName);
+  //                     done();
+  //                 }).catch((error) => {
+  //                     this.$message.error(`${error}`);
+  //                     this.$log.error(`Couldn't update user: ${error}`);
+  //                 })
+  //                 .finally(() => {
+  //                     loading.close();
+  //                     instance.loading = false;
+  //                 });
+  //         }
+  //     },
+  // }).catch(() => {});
+}
 </script>
+
+<template>
+  <div id="titlebar" :class="{ 'hide': initialLoading }">
+    <div>
+      <span role="link" class="groupname" @click="showGroupInfo">{{ groupname }}</span>
+      <span role="link" class="username" @click="showUserSettings">
+        <span class="avatar" :style="{ 'background-color': usercolor, 'margin': '0 1em' }">{{ initials }}</span>
+        {{ username }}
+      </span>
+    </div>
+  </div>
+</template>
 
 <style>
 #titlebar {

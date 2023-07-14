@@ -1,6 +1,13 @@
-import api from './APIRequestManager';
-import crypto from './CryptoManager';
-import Logger from './Logger';
+// import api from '../utils/APIRequestManager';
+// import crypto from '../utils/CryptoManager';
+import { defineStore } from 'pinia'
+import { useLoggerStore } from '@/stores/LoggerStore'
+import { useAPIRequestStore } from '@/stores/APIRequestStore'
+
+export const useFlowStore = defineStore('flow', () => {
+
+const Logger = useLoggerStore()
+const api = useAPIRequestStore()
 
 const userlist = {};
 
@@ -93,71 +100,73 @@ async function addUserToGroup(user, group) {
     return group;
 }
 
-export default {
-    async createUser() {
-        const user = {};
-        user.keys = await crypto.generateKeys();
+async function createUser() {
+    const user = {};
+    user.keys = await crypto.generateKeys();
 
-        const createUser = await api.createUser({
-            publicKeys: user.keys.userPublicKeys,
-        });
-        user.userId = createUser.userId;
-        api.setAuthHeader(user);
-        return user;
-    },
-    async prepareGroup(user, groupId, groupKey) {
-        let group = await fetchGroup(user, groupId);
-        group.groupKey = await groupKey;
-        group = await decryptGroup(group);
+    const createUser = await api.createUser({
+        publicKeys: user.keys.userPublicKeys,
+    });
+    user.userId = createUser.userId;
+    api.setAuthHeader(user);
+    return user;
+}
+async function prepareGroup(user, groupId, groupKey) {
+    let group = await fetchGroup(user, groupId);
+    group.groupKey = await groupKey;
+    group = await decryptGroup(group);
+    group.members = await fetchGroupMembers(group);
+    group.children = await fetchChildren(user, group);
+    return group;
+}
+
+async function teardown(user, group) {
+    if (user.userId != null) {
+        const groups = [];
+        if (group != null) {
+            const tokenKey = await crypto.group(group.groupKey).generateTokenKey(user.keys.publicSigningKey);
+            const notificationRecipients = group.memberships.map((membership) => ({ userId: membership.userId, serverSignedMembershipCertificate: membership.serverSignedMembershipCertificate }));
+            groups.push({
+                groupId: group.groupId,
+                serverSignedMembershipCertificate: group.membership.serverSignedMembershipCertificate,
+                tokenKey,
+                notificationRecipients,
+                groupTag: group.groupTag,
+            });
+        }
+        const data = { userId: user.userId, authHeader: await crypto.user(user).authHeader(), groups };
+        navigator.sendBeacon(`${api.httpBaseURL}/user/${user.userId}/teardown`, JSON.stringify(data));
+        localStorage.clear();
+    }
+}
+async function handleGroupUpdate(user, group, payload) {
+    if (payload.groupId !== group.groupId) {
+        Logger.info('Got group update for unknown group. Ignoring.');
+        return null;
+    }
+
+    switch (payload.action) {
+    case 'groupDeleted':
+        group = null;
+        break;
+    case 'settingsUpdated':
+        group = await updateSettings(group);
+        break;
+    case 'memberAdded':
+    case 'memberUpdated':
+    case 'memberDeleted':
+        group = await updateInternals(group);
+        group.memberships = await Promise.all(group.internals.encryptedMemberships.map(crypto.group(group.groupKey).decryptAndParse));
         group.members = await fetchGroupMembers(group);
-        group.children = await fetchChildren(user, group);
-        return group;
-    },
-    addUserToGroup,
-    addOrUpdateUserInfo,
-    async teardown(user, group) {
-        if (user.userId != null) {
-            const groups = [];
-            if (group != null) {
-                const tokenKey = await crypto.group(group.groupKey).generateTokenKey(user.keys.publicSigningKey);
-                const notificationRecipients = group.memberships.map((membership) => ({ userId: membership.userId, serverSignedMembershipCertificate: membership.serverSignedMembershipCertificate }));
-                groups.push({
-                    groupId: group.groupId,
-                    serverSignedMembershipCertificate: group.membership.serverSignedMembershipCertificate,
-                    tokenKey,
-                    notificationRecipients,
-                    groupTag: group.groupTag,
-                });
-            }
-            const data = { userId: user.userId, authHeader: await crypto.user(user).authHeader(), groups };
-            navigator.sendBeacon(`${api.httpBaseURL}/user/${user.userId}/teardown`, JSON.stringify(data));
-            localStorage.clear();
-        }
-    },
-    async handleGroupUpdate(user, group, payload) {
-        if (payload.groupId !== group.groupId) {
-            Logger.info('Got group update for unknown group. Ignoring.');
-            return null;
-        }
+        break;
+    default:
+        Logger.warning(`Unknown group update type: ${payload.action}`);
+    }
 
-        switch (payload.action) {
-        case 'groupDeleted':
-            group = null;
-            break;
-        case 'settingsUpdated':
-            group = await updateSettings(group);
-            break;
-        case 'memberAdded':
-        case 'memberUpdated':
-        case 'memberDeleted':
-            group = await updateInternals(group);
-            group.memberships = await Promise.all(group.internals.encryptedMemberships.map(crypto.group(group.groupKey).decryptAndParse));
-            group.members = await fetchGroupMembers(group);
-            break;
-        default:
-            Logger.warning(`Unknown group update type: ${payload.action}`);
-        }
+    return group;
+}
 
-        return group;
-    },
-};
+return { 
+  createUser, prepareGroup, addUserToGroup, addOrUpdateUserInfo, teardown, handleGroupUpdate
+  }
+})
