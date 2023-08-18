@@ -6,6 +6,9 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
 
+import { Buffer } from 'buffer'
+globalThis.Buffer = Buffer
+
 const pinia = createPinia()
 
 const i18n = createI18n({

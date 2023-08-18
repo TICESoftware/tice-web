@@ -4,7 +4,7 @@ import { DoubleRatchet, Header } from 'double-ratchet-ts';
 import { deriveHKDFKey } from 'sodium-hkdf';
 import { X3DH } from 'x3dh';
 import { ec as EC } from 'elliptic';
-// import KeyEncoder from 'key-encoder';
+import KeyEncoder from 'key-encoder';
 // /* eslint-disable import/no-cycle */
 import { useAPIRequestStore } from '@/stores/APIRequestStore'
 import { useLoggerStore } from '@/stores/LoggerStore'
@@ -50,8 +50,8 @@ export const useCryptoStore = defineStore('crypto', () => {
       publicPEMOptions: { label: 'PUBLIC KEY' },
       curve: ec,
   };
-  let keyEncoder
-  // const keyEncoder = new KeyEncoder(encoderOptions);
+  // let keyEncoder
+  const keyEncoder = new KeyEncoder(encoderOptions);
 
   function stringifyKeyPair(keyPair) {
       const item = { publicKey: Array.from(keyPair.publicKey), privateKey: Array.from(keyPair.privateKey), keyType: keyPair.keyType };

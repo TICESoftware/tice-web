@@ -72,24 +72,24 @@ try {
     user.value = await flow.createUser()
   }
 
-  const group = await flow.prepareGroup(user.value, groupId, groupKey);
-  if (group.value.settings.name === undefined) {
-    const ownerName = groupmembers.getUsername(group.value, group.value.settings.owner);
+  const groupScoped = await flow.prepareGroup(user.value, groupId, groupKey);
+  if (groupScoped.settings.name === undefined) {
+    const ownerName = groupmembers.getUsername(groupScoped, groupScoped.settings.owner);
     if (['x', 's', 'z'].indexOf(ownerName.slice(-1)) > -1) {
-      group.value.settings.name = t('welcome.groupName.s', { ownerName });
+      groupScoped.settings.name = t('welcome.groupName.s', { ownerName });
     } else {
-        group.value.settings.name = t('welcome.groupName', { ownerName });
+        groupScoped.settings.name = t('welcome.groupName', { ownerName });
     }
   }
 
-  if (user.value.userId in group.value.members) {
+  if (user.value.userId in groupScoped.members) {
     buttonLoading.value = true;
     // this.$tracking.loadFromStorage();
-    emit('register-complete', { user: user.value, group });
+    emit('register-complete', { user: user.value, group: groupScoped });
     refl_dialogVisible.value = false;
   } else {
-      title.value = group.value.settings.name;
-      group.value = group;
+      title.value = groupScoped.settings.name;
+      group.value = groupScoped;
   }
 } catch (error) {
   if ((`${error}`).indexOf('Group not found') > -1) {

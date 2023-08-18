@@ -31,7 +31,7 @@ export const useFlowStore = defineStore('flow', () => {
     delete group.info.groupTag;
 
     // Get internal group information
-    group.membership = await crypto.membership(user, group);
+    group.membership = await crypto.getMembership(user, group);
     group = await updateInternals(group);
     return group;
   }
