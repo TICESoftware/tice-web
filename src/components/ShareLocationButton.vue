@@ -3,12 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
 
+const { t } = useI18n()
 const groupmembers = useGroupMemberStore()
 
-const { t } = useI18n();
-
 const props = defineProps(['shareLocation', 'locationSharingUsers', 'group'])
-const emit= defineEmits(['update-share-location'])
+const emit = defineEmits(['update-share-location'])
 
 const shareLocationText = computed(() => {
   return (

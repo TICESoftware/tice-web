@@ -3,9 +3,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
 
+const { t } = useI18n()
 const groupmembers = useGroupMemberStore()
-
-const { t } = useI18n();
 
 const props = defineProps(['userId', 'group', 'locationSharingUsers', 'shareLocation'])
 
@@ -52,19 +51,19 @@ const groupMemberNames = computed(() => {
 </template>
 
 <style scoped>
-  .groupinfo-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      color:#999;
-  }
-  .groupinfo-body {
-      font-weight: bold;
-  }
-  .groupinfo-body > span {
-      width:50%;
-  }
-  .el-button {
-      width: 100% !important;
-      margin-top:1em;
-  }
+.groupinfo-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color:#999;
+}
+.groupinfo-body {
+    font-weight: bold;
+}
+.groupinfo-body > span {
+    width:50%;
+}
+.el-button {
+    width: 100% !important;
+    margin-top:1em;
+}
 </style>
