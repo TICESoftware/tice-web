@@ -19,13 +19,13 @@ const api = useAPIRequestStore()
 const crypto = useCryptoStore()
 
 const props = defineProps(['reset'])
-const emit= defineEmits(['register-complete'])
+const emit = defineEmits(['register-complete'])
 
 const refl_dialogVisible = ref(true)
 const buttonLoading = ref(false)
-const group = ref()
+const group = ref(null)
 const user = ref(null)
-const title = ref()
+const title = ref(null)
 const publicNameForm = ref({ publicName: '' })
 const sharingLocation = ref(true)
 
@@ -63,7 +63,7 @@ try {
   log.trace('Migrate old cookies')
   await crypto.migrateStorage(groupId);
 
-  user.value = await crypto.loadFromStorage(groupId);
+  // user.value = await crypto.loadFromStorage(groupId);
   if (user.value !== null) {
     log.info('Found user data in cookie')
       api.setAuthHeader(user.value);
@@ -167,6 +167,16 @@ function showAbout() {
     showClose: true,
   }).catch(() => {});
 }
+
+const groupInfoConditional = computed(() => {
+  return group.value !== null && !props.reset && typeof group.value !== 'string'
+})
+const formConditional = computed(() => {
+  return initialLoading.value === false && group.value !== 'notFound' && group.value !== 'error'
+})
+const footerConditional = computed(() => {
+  return group.value !== null && typeof group.value !== 'string'
+})
 </script>
 
 <template>
@@ -182,21 +192,21 @@ function showAbout() {
     </div>
     <div v-loading="initialLoading" v-if="initialLoading" style="height:100px;"></div>
     <GroupInfo
-      v-if="group != null && !reset && typeof group != 'string'"
+      v-if="groupInfoConditional"
       :group="group" 
     />
-    <p v-if="initialLoading === false && group !== 'notFound' && group !== 'error'">
+    <p v-if="formConditional">
       <el-form ref="public-name" :model="publicNameForm" :hide-required-asterisk="true" @submit.prevent>
-          <el-form-item :label="t('titleBar.settings.publicName')" :rules="[ { required: true, message: t('welcome.name.required') } ]" prop="publicName">
-              <el-input v-model="publicNameForm.publicName"/>
-          </el-form-item>
-          <el-switch v-model="sharingLocation" style="margin-right:1em;"></el-switch> {{ t("welcome.switch.shareLocation") }}
-          <el-button type="primary" native-type="submit" @click="start" :loading="buttonLoading">
-              <template v-if="group == null || typeof group == 'string'">{{ t("welcome.button.reload") }}</template>
-              <template v-else>{{ t("welcome.button.join") }}</template>
-          </el-button><br><br>
+        <el-form-item :label="t('titleBar.settings.publicName')" :rules="[ { required: true, message: t('welcome.name.required') } ]" prop="publicName">
+          <el-input v-model="publicNameForm.publicName"/>
+        </el-form-item>
+        <el-switch v-model="sharingLocation" style="margin-right:1em;"></el-switch> {{ t("welcome.switch.shareLocation") }}
+        <el-button type="primary" native-type="submit" @click="start" :loading="buttonLoading">
+          <template v-if="group == null || typeof group == 'string'">{{ t("welcome.button.reload") }}</template>
+          <template v-else>{{ t("welcome.button.join") }}</template>
+        </el-button><br><br>
       </el-form>
-      <template v-if="group !== null && typeof group !== 'string'" >
+      <template v-if="footerConditional" >
         <small>
           {{ t("welcome.cookies") }} 
           <a href='https://ticeapp.com/datenschutz' target='_blank'>

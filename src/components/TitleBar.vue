@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
+import GroupInfo from './GroupInfo.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
@@ -12,7 +13,7 @@ const api = useAPIRequestStore()
 const log = useLoggerStore()
 
 const props = defineProps(['user', 'group', 'initialLoading', 'shareLocation', 'locationSharingUsers'])
-const emit= defineEmits(['teardown', 'update-username'])
+const emit = defineEmits(['teardown', 'update-username'])
 
 const username = computed(() => {
   if (props.user.userId == null || props.group == null) {
@@ -42,10 +43,8 @@ const groupname = computed(() => {
 function showGroupInfo() {
   // this.$tracking.screen('GroupInfo');
   ElMessageBox({
-    message: h('group-info', {
-      props: {
-        group: props.group, userId: props.user.userId, locationSharingUsers: props.locationSharingUsers, shareLocation: props.shareLocation,
-      },
+    message: h(GroupInfo, {
+      group: props.group, userId: props.user.userId, locationSharingUsers: props.locationSharingUsers, shareLocation: props.shareLocation
     }),
     title: groupname.value,
     closeOnClickModal: true,
@@ -62,11 +61,9 @@ function showUserSettings() {
     message: h('div', [
       h('div', { style: { marginBottom: '1em' } }, [
         h('el-button', {
-          props: { type: 'text' },
-          on: {
-            click: () => {
-              emit('teardown', { reload: true });
-            },
+          class: 'el-button el-button--text',
+          onClick() {
+            emit('teardown', { reload: true });
           },
         }, t('titleBar.settings.deleteData')),
       ]),
@@ -80,28 +77,30 @@ function showUserSettings() {
     closeOnHashChange: false,
     showConfirmButton: false,
     showClose: true,
-    // beforeClose: (action, instance, done) => {
-    //   const newName = instance.$refs.input.value;
-    //   const oldName = groupmembers.getUsername(props.group, props.user.userId);
-    //   if (instance.loading === true || newName === null || newName === oldName) {
-    //     done();
-    //   } else {
-    //     instance.loading = true;
-    //     const loading = this.$loading({ target: instance.$el.childNodes[0] });
-    //     api.user(props.user.userId).update({ publicName: newName })
-    //       .then(() => {
-    //         emit('update-username', newName);
-    //         done();
-    //       }).catch((error) => {
-    //         ElMessage.error(`${error}`);
-    //         log.error(`Couldn't update user: ${error}`);
-    //       })
-    //       .finally(() => {
-    //         loading.close();
-    //         instance.loading = false;
-    //       });
-    //   }
-    // },
+    beforeClose: (action, instance, done) => {
+      // const newName = instance.$refs.input.value;
+      // const newName = instance.value;
+      // const oldName = groupmembers.getUsername(props.group, props.user.userId);
+      // if (instance.loading === true || newName === null || newName === oldName) {
+      //   done();
+      // } else {
+      //   instance.loading = true;
+        // const loading = this.$loading({ target: instance.$el.childNodes[0] });
+        // api.user(props.user.userId).update({ publicName: newName })
+        //   .then(() => {
+        //     emit('update-username', newName);
+        //     done();
+        //   }).catch((error) => {
+        //     ElMessage.error(`${error}`);
+        //     log.error(`Couldn't update user: ${error}`);
+        //   })
+        //   .finally(() => {
+            // loading.close();
+      //       instance.loading = false;
+      //     });
+      // }
+      done()
+    },
   }).catch(() => {});
 }
 </script>

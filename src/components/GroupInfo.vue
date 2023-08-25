@@ -23,7 +23,7 @@ const groupMemberNames = computed(() => {
 
 <template>
   <div>
-    <el-row>
+    <!-- <el-row>
       <el-col :span="12" style="text-align:left;">
         <div class="grid-content">
           <div class="groupinfo-title">{{ t("groupinfo.permissionMode") }}</div>
@@ -36,7 +36,7 @@ const groupMemberNames = computed(() => {
           <div class="groupinfo-body" v-if="props.group != null">{{ t("groupinfo.joinMode." + props.group.info.joinMode) }}</div>
         </div>
       </el-col>
-    </el-row>
+    </el-row> -->
     <div class="groupinfo-title" style="text-align:left;"><!-- margin-top:2em; -->
         {{ t("groupInfo.members") }} ({{ groupMemberNames.length }})
     </div>

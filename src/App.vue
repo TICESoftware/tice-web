@@ -5,7 +5,7 @@ import WelcomeBox from './components/WelcomeBox.vue'
 import About from './components/About.vue'
 // import Chat from './components/Chat.vue'
 import ShareLocationButton from './components/ShareLocationButton.vue'
-// import map
+import Map from './components/Map.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
@@ -337,7 +337,7 @@ function showTICEInBackground() {
 </script>
 
 <template>
-  <div id="#app">
+  <!-- <div id="#app"> -->
     <TitleBar
       :user="user"
       :group="group"
@@ -348,11 +348,21 @@ function showTICEInBackground() {
       @update-share-location="updateShareLocation"
       @teardown="teardown"
     />
-    <!-- <Map /> -->
-    <WelcomeBox
-      @register-complete="registerComplete"
-      :reset="tearingDown"
+    <Map
+      v-if="group !== null"
+      :group="group"
+      :locations="locations"
+      :ownLocation="lastLocation === null ? null : lastLocation.coords"
+      @show-info="showInfo"
+      @show-meeting-point="showMeetingPoint"
+      :initialLoading="group == null"
     />
+    <Suspense>
+      <WelcomeBox
+        @register-complete="registerComplete"
+        :reset="tearingDown"
+      />
+    </Suspense>
     <div id="bottomleftlogo" @click="showAbout">
       <img src="/tice_logo_hstack.png" alt="TICE">
     </div>
@@ -376,7 +386,7 @@ function showTICEInBackground() {
       :group="group"
       @update-share-location="updateShareLocation"
     />
-  </div>
+  <!-- </div> -->
 </template>
 
 <style>

@@ -1,175 +1,173 @@
-<template>
-    <div id="map-container">
-        <MglMap :accessToken="accessToken" :mapStyle.sync="mapStyle" @load="onLoadMap">
-            <MglNavigationControl position="top-right" />
-            <MapMarkers :availableLocations="availableLocations" @show-info="showInfo"/>
-            <MglMarker v-if="meetingPointCoordinates !== undefined" :coordinates="meetingPointCoordinates" @click="$emit('show-meeting-point')"/>
-            <MglMarker v-if="ownLocation != null" :coordinates="ownCoordinates">
-                <template slot="marker"><span class="avatar" style="background-color: #2980b9;height:15px;width:15px;"></span></template>
-                <MglPopup>
-                    {{ $t("map.myLocation") }}
-                </MglPopup>
-            </MglMarker>
-        </MglMap>
-    </div>
-</template>
-
-<script>
-import Mapbox from 'mapbox-gl';
-import {
-    MglMap, MglMarker, MglNavigationControl, MglPopup,
-} from 'vue-mapbox';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+// import {
+//     MglMap, MglMarker, MglNavigationControl, MglPopup,
+// } from 'vue-mapbox';
+import { MapboxMap, MapboxNavigationControl, MapboxMarker, MapboxPopup, MapboxGeolocateControl } from "vue-mapbox-ts"
+import { useI18n } from 'vue-i18n'
 import MapMarkers from './MapMarkers.vue';
-import iso3316 from '../utils/iso3316.json';
-import countriesBoundingBoxes from '../utils/countriesBoundingBoxes.json';
+// import iso3316 from '../utils/iso3316.json';
+// import countriesBoundingBoxes from '../utils/countriesBoundingBoxes.json';
 
-class AutoFitToggleControl {
-    constructor() {
-        this.map = undefined;
-        this.container = document.createElement('div');
-        this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
-        this.button = document.createElement('button');
-        this.button.id = 'autoFitToggleButton';
-        this.button.className = 'mapboxgl-ctrl-auto-fit active';
-        this.button.type = 'button';
-        const span = document.createElement('span');
-        span.className = 'mapboxgl-ctrl-icon';
-        this.button.appendChild(span);
-        this.container.appendChild(this.button);
+const { t } = useI18n();
+
+// class AutoFitToggleControl {
+//     constructor() {
+//         this.map = undefined;
+//         this.container = document.createElement('div');
+//         this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+//         this.button = document.createElement('button');
+//         this.button.id = 'autoFitToggleButton';
+//         this.button.className = 'mapboxgl-ctrl-auto-fit active';
+//         this.button.type = 'button';
+//         const span = document.createElement('span');
+//         span.className = 'mapboxgl-ctrl-icon';
+//         this.button.appendChild(span);
+//         this.container.appendChild(this.button);
+//     }
+
+//     onAdd(map) {
+//         this.map = map;
+//         return this.container;
+//     }
+
+//     onRemove() {
+//         this.container.parentNode.removeChild(this.container);
+//         this.map = undefined;
+//     }
+// }
+
+const props = defineProps(['locations', 'initialLoading', 'ownLocation', 'group'])
+const emit = defineEmits(['show-info', 'show-meeting-point'])
+
+watch(
+  props.locations, () => {
+      autoFitMap();
+  },
+)
+
+const availableLocations = computed(() => {
+    return Object.values(props.locations).filter((location) => location.coordinates !== undefined);
+})
+const ownCoordinates = computed(() => {
+    return [props.ownLocation.longitude, props.ownLocation.latitude];
+})
+const padding = computed(() => {
+    const padHorizontal = Math.min(window.innerWidth / 8, 100);
+    const padVertical = Math.min(window.innerHeight / 8, 100);
+    return {
+        top: padVertical, bottom: padVertical, left: padHorizontal, right: padHorizontal,
+    };
+})
+const meetingPointCoordinates = computed(() => {
+    if (props.group.internalSettings.meetingPoint !== undefined) {
+        return [props.group.internalSettings.meetingPoint.longitude, props.group.internalSettings.meetingPoint.latitude];
     }
+    return undefined;
+})
 
-    onAdd(map) {
-        this.map = map;
-        return this.container;
+const accessToken = import.meta.env.VITE_MAPBOX_API_KEY
+const mapStyle = ref('mapbox://styles/mapbox/streets-v8')
+const mapActions = ref(undefined)
+const autoFitting = ref(true)
+
+function showInfo(senderId) {
+  emit('show-info', props.locations[senderId]);
+}
+function onLoadMap(options) {
+    mapActions.value = options.component.actions;
+
+    // const autoFitToggle = new AutoFitToggleControl();
+    // autoFitToggle.button.onclick = setAutoFitting;
+    // options.map.addControl(autoFitToggle);
+
+    const onInteraction = (e) => {
+        if (e.originalEvent !== undefined) {
+            setAutoFitting(false);
+        }
+    };
+    options.map.on('mousedown', onInteraction);
+    options.map.on('dragstart', onInteraction);
+    options.map.on('movestart', onInteraction);
+    options.map.on('touchstart', onInteraction);
+    options.map.on('zoomstart', onInteraction);
+
+    setAutoFitting(true);
+}
+function setAutoFitting(newValue = null) {
+    if (typeof newValue === 'boolean') {
+        autoFitting.value = newValue;
+    } else {
+        autoFitting.value = !autoFitting.value
     }
-
-    onRemove() {
-        this.container.parentNode.removeChild(this.container);
-        this.map = undefined;
+    if (autoFitting.value) {
+        document.getElementById('autoFitToggleButton').classList.add('active');
+        autoFitMap();
+    } else {
+        document.getElementById('autoFitToggleButton').classList.remove('active');
     }
 }
+function autoFitMap() {
+    if (mapActions.value === undefined || !autoFitting.value) { return; }
+    const coordinates = availableLocations.value.map((location) => location.coordinates);
+    if (meetingPointCoordinates.value !== undefined) {
+        coordinates.push(meetingPointCoordinates.value);
+    }
+    if (props.ownLocation !== null) {
+        coordinates.push(ownCoordinates.value);
+    }
 
-export default {
-    components: {
-        MglMap, MglMarker, MglNavigationControl, MglPopup, MapMarkers,
-    },
-    props: ['locations', 'initialLoading', 'ownLocation', 'group'],
-    watch: {
-        locations() {
-            this.autoFitMap();
-        },
-    },
-    computed: {
-        availableLocations() {
-            return Object.values(this.locations).filter((location) => location.coordinates !== undefined);
-        },
-        ownCoordinates() {
-            return [this.ownLocation.longitude, this.ownLocation.latitude];
-        },
-        padding() {
-            const padHorizontal = Math.min(window.innerWidth / 8, 100);
-            const padVertical = Math.min(window.innerHeight / 8, 100);
-            return {
-                top: padVertical, bottom: padVertical, left: padHorizontal, right: padHorizontal,
-            };
-        },
-        meetingPointCoordinates() {
-            if (this.group.internalSettings.meetingPoint !== undefined) {
-                return [this.group.internalSettings.meetingPoint.longitude, this.group.internalSettings.meetingPoint.latitude];
-            }
-            return undefined;
-        },
-    },
-    data() {
-        return {
-            accessToken: process.env.VUE_APP_MAPBOX_API_KEY,
-            mapStyle: 'mapbox://styles/mapbox/streets-v8',
-            mapActions: undefined,
-            autoFitting: true,
-        };
-    },
-    created() {
-        // We need to set mapbox-gl library here in order to use it in template
-        this.mapbox = Mapbox;
-    },
-    methods: {
-        showInfo(senderId) {
-            this.$emit('show-info', this.locations[senderId]);
-        },
-        onLoadMap(options) {
-            this.mapActions = options.component.actions;
+    switch (coordinates.length) {
+    case 0:
+        fitToUserCountry();
+        break;
+    case 1:
+        mapActions.value.flyTo({ center: coordinates[0], zoom: 13 });
+        break;
+    default:
+        mapActions.value.fitBounds(coordinates, { padding: padding.value });
+    }
+}
+function fitToUserCountry() {
+    const region = new Intl.Locale(navigator.language);
 
-            const autoFitToggle = new AutoFitToggleControl();
-            autoFitToggle.button.onclick = this.setAutoFitting;
-            options.map.addControl(autoFitToggle);
+    // if (navigator.language && region.region) {
+    //     const region3 = iso3316[region.region];
+    //     const boundingBox = countriesBoundingBoxes[region3];
+    //     if (boundingBox) {
+    //         this.mapActions.fitBounds([boundingBox.sw, boundingBox.ne], { padding: this.padding });
+    //         return;
+    //     }
+    // }
 
-            const onInteraction = (e) => {
-                if (e.originalEvent !== undefined) {
-                    this.setAutoFitting(false);
-                }
-            };
-            options.map.on('mousedown', onInteraction);
-            options.map.on('dragstart', onInteraction);
-            options.map.on('movestart', onInteraction);
-            options.map.on('touchstart', onInteraction);
-            options.map.on('zoomstart', onInteraction);
+    // Default fallback to Europe
+    mapActions.value.flyTo({ center: [10.538372247, 51.106318072], zoom: 4 });
+}
 
-            this.setAutoFitting(true);
-        },
-        setAutoFitting(newValue = null) {
-            if (typeof newValue === 'boolean') {
-                this.autoFitting = newValue;
-            } else {
-                this.autoFitting = !this.autoFitting;
-            }
-            if (this.autoFitting) {
-                document.getElementById('autoFitToggleButton').classList.add('active');
-                this.autoFitMap();
-            } else {
-                document.getElementById('autoFitToggleButton').classList.remove('active');
-            }
-        },
-        autoFitMap() {
-            if (this.mapActions === undefined || !this.autoFitting) { return; }
-            const coordinates = this.availableLocations.map((location) => location.coordinates);
-            if (this.meetingPointCoordinates !== undefined) {
-                coordinates.push(this.meetingPointCoordinates);
-            }
-            if (this.ownLocation !== null) {
-                coordinates.push(this.ownCoordinates);
-            }
-
-            switch (coordinates.length) {
-            case 0:
-                this.fitToUserCountry();
-                break;
-            case 1:
-                this.mapActions.flyTo({ center: coordinates[0], zoom: 13 });
-                break;
-            default:
-                this.mapActions.fitBounds(coordinates, { padding: this.padding });
-            }
-        },
-        fitToUserCountry() {
-            const region = new Intl.Locale(navigator.language);
-
-            if (navigator.language && region.region) {
-                const region3 = iso3316[region.region];
-                const boundingBox = countriesBoundingBoxes[region3];
-                if (boundingBox) {
-                    this.mapActions.fitBounds([boundingBox.sw, boundingBox.ne], { padding: this.padding });
-                    return;
-                }
-            }
-            // Default fallback to Europe
-            this.mapActions.flyTo({ center: [10.538372247, 51.106318072], zoom: 4 });
-        },
-    },
-};
+// We need to set mapbox-gl library here in order to use it in template
+// const mapbox = Mapbox;
 </script>
+
+<template>
+  <div id="map-container">
+    <MapboxMap :accessToken="accessToken" :mapStyle="mapStyle" @load="onLoadMap">
+      <MapboxNavigationControl position="top-right" />
+      <MapboxGeolocateControl />
+      <MapMarkers :availableLocations="availableLocations" @show-info="showInfo"/>
+      <MapboxMarker v-if="meetingPointCoordinates !== undefined" :lngLat="meetingPointCoordinates" @click="emit('show-meeting-point')" />
+      <MapboxMarker v-if="props.ownLocation != null" :lngLat="ownCoordinates">
+        <!-- <template slot="marker"><span class="avatar" style="background-color: #2980b9;height:15px;width:15px;"></span></template> -->
+        <MapboxPopup>
+          {{ t("map.myLocation") }}
+        </MapboxPopup>
+      </MapboxMarker>
+    </MapboxMap>
+  </div>
+</template>
 
 <style>
 #map-container {
+    display: flex;  
     position: relative;
     flex: 1 1 auto;
 }
