@@ -25,301 +25,300 @@ export const useCryptoStore = defineStore('crypto', () => {
   const ec = new EC('p521');
 
   function generateUUID() {
-      let d = new Date().getTime();
-      let d2 = (performance && performance.now && (performance.now() * 1000)) || 0;
-      /* eslint-disable no-bitwise, no-mixed-operators */
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-          let r = Math.random() * 16;
-          if (d > 0) {
-              r = (d + r) % 16 | 0;
-              d = Math.floor(d / 16);
-          } else {
-              r = (d2 + r) % 16 | 0;
-              d2 = Math.floor(d2 / 16);
-          }
-          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-      });
-      /* eslint-enable no-bitwise, no-mixed-operators */
+    let d = new Date().getTime();
+    let d2 = (performance && performance.now && (performance.now() * 1000)) || 0;
+    /* eslint-disable no-bitwise, no-mixed-operators */
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      let r = Math.random() * 16;
+      if (d > 0) {
+        r = (d + r) % 16 | 0;
+        d = Math.floor(d / 16);
+      } else {
+        r = (d2 + r) % 16 | 0;
+        d2 = Math.floor(d2 / 16);
+      }
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    /* eslint-enable no-bitwise, no-mixed-operators */
   }
 
   const sessionCollapseId = generateUUID();
 
   const encoderOptions = {
-      curveParameters: [1, 3, 132, 0, 35],
-      privatePEMOptions: { label: 'EC PRIVATE KEY' },
-      publicPEMOptions: { label: 'PUBLIC KEY' },
-      curve: ec,
+    curveParameters: [1, 3, 132, 0, 35],
+    privatePEMOptions: { label: 'EC PRIVATE KEY' },
+    publicPEMOptions: { label: 'PUBLIC KEY' },
+    curve: ec,
   };
-  // let keyEncoder
+
   const keyEncoder = new KeyEncoder(encoderOptions);
 
   function stringifyKeyPair(keyPair) {
-      const item = { publicKey: Array.from(keyPair.publicKey), privateKey: Array.from(keyPair.privateKey), keyType: keyPair.keyType };
-      return JSON.stringify(item);
+    const item = { publicKey: Array.from(keyPair.publicKey), privateKey: Array.from(keyPair.privateKey), keyType: keyPair.keyType };
+    return JSON.stringify(item);
   }
   function parseKeyPair(stringified) {
-      const item = JSON.parse(stringified);
-      return { publicKey: Uint8Array.from(item.publicKey), privateKey: Uint8Array.from(item.privateKey), keyType: item.keyType };
+    const item = JSON.parse(stringified);
+    return { publicKey: Uint8Array.from(item.publicKey), privateKey: Uint8Array.from(item.privateKey), keyType: item.keyType };
   }
   function saveHandshake() {
-      if (cookiesAllowed) {
-          const handshakeStore = {
-              identityKeyPair: stringifyKeyPair(handshake.keyMaterial.identityKeyPair),
-              signedPrekeyPair: stringifyKeyPair(handshake.keyMaterial.signedPrekeyPair),
-              oneTimePrekeyPairs: handshake.keyMaterial.oneTimePrekeyPairs.map((otp) => stringifyKeyPair(otp)),
-          };
-          localStorage.setItem(`tice.handshake.${groupId}`, JSON.stringify(handshakeStore));
-      }
+    if (cookiesAllowed) {
+      const handshakeStore = {
+        identityKeyPair: stringifyKeyPair(handshake.keyMaterial.identityKeyPair),
+        signedPrekeyPair: stringifyKeyPair(handshake.keyMaterial.signedPrekeyPair),
+        oneTimePrekeyPairs: handshake.keyMaterial.oneTimePrekeyPairs.map((otp) => stringifyKeyPair(otp)),
+      };
+      localStorage.setItem(`tice.handshake.${groupId}`, JSON.stringify(handshakeStore));
+    }
   }
 
   function addOrUpdateDR(senderId, collapsing, userDR) {
-      const conversationId = collapsing ? 0 : 1;
-      const sessionState = DoubleRatchet.sessionStateBlob(userDR.sessionState);
-      localStorage.setItem(`tice.doubleratchet.${conversationId}${senderId}`, sessionState);
+    const conversationId = collapsing ? 0 : 1;
+    const sessionState = DoubleRatchet.sessionStateBlob(userDR.sessionState);
+    localStorage.setItem(`tice.doubleratchet.${conversationId}${senderId}`, sessionState);
   }
   function getDR(senderId, collapsing) {
-      const conversationId = collapsing ? 0 : 1;
-      const storedItem = localStorage.getItem(`tice.doubleratchet.${conversationId}${senderId}`);
-      if (storedItem === null) { return undefined; }
-      return DoubleRatchet.initSessionStateBlob(storedItem);
+    const conversationId = collapsing ? 0 : 1;
+    const storedItem = localStorage.getItem(`tice.doubleratchet.${conversationId}${senderId}`);
+    if (storedItem === null) { return undefined; }
+    return DoubleRatchet.initSessionStateBlob(storedItem);
   }
 
   function addSeenConversationInvitations(senderId, collapsing, ciFingerprint, timestamp) {
-      const conversationId = collapsing ? 0 : 1;
-      localStorage.setItem(`tice.seenconversation.${conversationId}${senderId}`, JSON.stringify({ fingerprint: ciFingerprint, timestamp }));
+    const conversationId = collapsing ? 0 : 1;
+    localStorage.setItem(`tice.seenconversation.${conversationId}${senderId}`, JSON.stringify({ fingerprint: ciFingerprint, timestamp }));
   }
   function getSeenConversationInvitations(senderId, collapsing) {
-      const conversationId = collapsing ? 0 : 1;
-      const item = localStorage.getItem(`tice.seenconversation.${conversationId}${senderId}`);
-      return item === null ? undefined : JSON.parse(item);
+    const conversationId = collapsing ? 0 : 1;
+    const item = localStorage.getItem(`tice.seenconversation.${conversationId}${senderId}`);
+    return item === null ? undefined : JSON.parse(item);
   }
 
   function addSendingConversationInvitation(senderId, collapsing, conversationInvitation) {
-      const conversationId = collapsing ? 0 : 1;
-      localStorage.setItem(`tice.sendingconversation.${conversationId}${senderId}`, JSON.stringify(conversationInvitation));
+    const conversationId = collapsing ? 0 : 1;
+    localStorage.setItem(`tice.sendingconversation.${conversationId}${senderId}`, JSON.stringify(conversationInvitation));
   }
   function getSendingConversationInvitation(senderId, collapsing) {
-      const conversationId = collapsing ? 0 : 1;
-      const item = localStorage.getItem(`tice.sendingconversation.${conversationId}${senderId}`);
-      return item === null ? undefined : JSON.parse(item);
+    const conversationId = collapsing ? 0 : 1;
+    const item = localStorage.getItem(`tice.sendingconversation.${conversationId}${senderId}`);
+    return item === null ? undefined : JSON.parse(item);
   }
   function removeSendingConversationInvitation(senderId, collapsing) {
-      const conversationId = collapsing ? 0 : 1;
-      localStorage.removeItem(`tice.sendingconversation.${conversationId}${senderId}`);
+    const conversationId = collapsing ? 0 : 1;
+    localStorage.removeItem(`tice.sendingconversation.${conversationId}${senderId}`);
   }
 
   async function dataFromBase64(b64EncodedString) {
-      await _sodium.ready;
-      const sodium = _sodium;
-      return sodium.from_base64(b64EncodedString, sodium.base64_variants.ORIGINAL);
+    await _sodium.ready;
+    const sodium = _sodium;
+    return sodium.from_base64(b64EncodedString, sodium.base64_variants.ORIGINAL);
   }
   async function base64EncodedString(data) {
-      await _sodium.ready;
-      const sodium = _sodium;
-      return sodium.to_base64(data, sodium.base64_variants.ORIGINAL);
+    await _sodium.ready;
+    const sodium = _sodium;
+    return sodium.to_base64(data, sodium.base64_variants.ORIGINAL);
   }
 
   async function encryptSymmetric(key64, plaintextString) {
-      await _sodium.ready;
-      const sodium = _sodium;
+    await _sodium.ready;
+    const sodium = _sodium;
 
-      const key = await dataFromBase64(key64);
-      const plaintext = sodium.from_string(plaintextString);
-      const nonce = sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-      const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, null, null, nonce, key);
+    const key = await dataFromBase64(key64);
+    const plaintext = sodium.from_string(plaintextString);
+    const nonce = sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, null, null, nonce, key);
 
-      const nonceAndCiphertext = new Uint8Array(nonce.length + ciphertext.length);
-      nonceAndCiphertext.set(nonce);
-      nonceAndCiphertext.set(ciphertext, nonce.length);
+    const nonceAndCiphertext = new Uint8Array(nonce.length + ciphertext.length);
+    nonceAndCiphertext.set(nonce);
+    nonceAndCiphertext.set(ciphertext, nonce.length);
 
-      return base64EncodedString(nonceAndCiphertext);
+    return base64EncodedString(nonceAndCiphertext);
   }
   async function decryptSymmetric(key64, nonceAndCiphertext64, enc) {
-      await _sodium.ready;
-      const sodium = _sodium;
+    await _sodium.ready;
+    const sodium = _sodium;
 
-      const key = await dataFromBase64(key64);
-      const nonceAndCiphertext = await dataFromBase64(nonceAndCiphertext64);
-      const nonce = nonceAndCiphertext.slice(0, sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-      const ciphertext = nonceAndCiphertext.slice(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    const key = await dataFromBase64(key64);
+    const nonceAndCiphertext = await dataFromBase64(nonceAndCiphertext64);
+    const nonce = nonceAndCiphertext.slice(0, sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    const ciphertext = nonceAndCiphertext.slice(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
 
-      const decrypted = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, ciphertext, null, nonce, key);
-      if (enc === 'base64') {
-          return base64EncodedString(decrypted);
-      }
-      return sodium.to_string(decrypted);
+    const decrypted = sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, ciphertext, null, nonce, key);
+    if (enc === 'base64') {
+      return base64EncodedString(decrypted);
+    }
+    return sodium.to_string(decrypted);
   }
 
   async function encryptPayloadContainer(payloadContainer) {
-      await _sodium.ready;
-      const sodium = _sodium;
+    await _sodium.ready;
+    const sodium = _sodium;
 
-      const key = sodium.crypto_aead_xchacha20poly1305_ietf_keygen();
-      const plaintext = JSON.stringify(payloadContainer);
-      const ciphertext = await encryptSymmetric(await base64EncodedString(key), plaintext);
+    const key = sodium.crypto_aead_xchacha20poly1305_ietf_keygen();
+    const plaintext = JSON.stringify(payloadContainer);
+    const ciphertext = await encryptSymmetric(await base64EncodedString(key), plaintext);
 
-      return { ciphertext, secretKey: key };
+    return { ciphertext, secretKey: key };
   }
 
   function sign(privateSigningKey, payload) {
-      const hash = ec.hash().update(payload).digest();
-      const signature = privateSigningKey.sign(hash);
-      return signature.toDER('hex');
+    const hash = ec.hash().update(payload).digest();
+    const signature = privateSigningKey.sign(hash);
+    return signature.toDER('hex');
   }
   function verify(publicSigningKey, payload, signature) {
-      const hash = ec.hash().update(payload).digest();
-      const keypair = ec.keyFromPublic(publicSigningKey, 'hex');
-      return ec.verify(hash, signature, keypair);
+    const hash = ec.hash().update(payload).digest();
+    const keypair = ec.keyFromPublic(publicSigningKey, 'hex');
+    return ec.verify(hash, signature, keypair);
   }
   async function jwt(privateSigningKey, payload) {
-      await _sodium.ready;
-      const sodium = _sodium;
-      const header64 = sodium.to_base64(JSON.stringify({ typ: 'JWT', alg: 'ES512' }));
-      const payload64 = sodium.to_base64(JSON.stringify(payload));
+    await _sodium.ready;
+    const sodium = _sodium;
+    const header64 = sodium.to_base64(JSON.stringify({ typ: 'JWT', alg: 'ES512' }));
+    const payload64 = sodium.to_base64(JSON.stringify(payload));
 
-      const signatureHex = sign(privateSigningKey, `${header64}.${payload64}`);
-      const signature64 = sodium.to_base64(sodium.from_hex(signatureHex));
-      return `${header64}.${payload64}.${signature64}`;
+    const signatureHex = sign(privateSigningKey, `${header64}.${payload64}`);
+    const signature64 = sodium.to_base64(sodium.from_hex(signatureHex));
+    return `${header64}.${payload64}.${signature64}`;
   }
   async function selfSignedMembershipCertificate(user) {
-      const iat = new Date();
-      const exp = new Date();
-      exp.setSeconds(iat.getSeconds() + 60 * 60 * 24 * 30 * 6);
-      const certificatePayload = {
-          iat: iat.getTime() / 1000,
-          exp: exp.getTime() / 1000,
-          admin: false,
-          jti: generateUUID(),
-          groupId,
-          sub: user.userId,
-          iss: { user: user.userId },
-      };
-      return jwt(user.keys.signingKey, certificatePayload);
+    const iat = new Date();
+    const exp = new Date();
+    exp.setSeconds(iat.getSeconds() + 60 * 60 * 24 * 30 * 6);
+    const certificatePayload = {
+      iat: iat.getTime() / 1000,
+      exp: exp.getTime() / 1000,
+      admin: false,
+      jti: generateUUID(),
+      groupId,
+      sub: user.userId,
+      iss: { user: user.userId },
+    };
+    return jwt(user.keys.signingKey, certificatePayload);
   }
   async function generateMembership(user, group) {
-      Logger.trace('Generate membership');
+    Logger.trace('Generate membership');
 
-      const selfSignedMembership = await selfSignedMembershipCertificate(user);
-      const joinGroupRequest = await api.group(group.groupId, group.groupTag).join(selfSignedMembership);
+    const selfSignedMembership = await selfSignedMembershipCertificate(user);
+    const joinGroupRequest = await api.group(group.groupId, group.groupTag).join(selfSignedMembership);
 
-      return {
-          userId: user.userId,
-          groupId: group.groupId,
-          admin: false,
-          publicSigningKey: user.keys.publicSigningKey,
-          selfSignedMembershipCertificate: selfSignedMembership,
-          serverSignedMembershipCertificate: joinGroupRequest.serverSignedMembershipCertificate,
-      };
+    return {
+      userId: user.userId,
+      groupId: group.groupId,
+      admin: false,
+      publicSigningKey: user.keys.publicSigningKey,
+      selfSignedMembershipCertificate: selfSignedMembership,
+      serverSignedMembershipCertificate: joinGroupRequest.serverSignedMembershipCertificate,
+    };
   }
 
   async function loadMembership(user, group) {
-      Logger.trace('Load membership');
-      const storedMembership = localStorage.getItem(`tice.membership.${group.groupId}`);
-      if (storedMembership !== null && storedMembership.userId === user.userId) {
-          Logger.trace('Loaded membership from cookie');
-          return JSON.parse(storedMembership);
-      }
-      Logger.trace('Could not load membership');
-      return null;
+    Logger.trace('Load membership');
+    const storedMembership = localStorage.getItem(`tice.membership.${group.groupId}`);
+    if (storedMembership !== null && storedMembership.userId === user.userId) {
+      Logger.trace('Loaded membership from cookie');
+      return JSON.parse(storedMembership);
+    }
+    Logger.trace('Could not load membership');
+    return null;
   }
 
   async function getMembership(user, group) {
-      return (await loadMembership(user, group)) ?? generateMembership(user, group);
+    return (await loadMembership(user, group)) ?? generateMembership(user, group);
   }
 
   async function createPrekeyBundle() {
-      await _sodium.ready;
-      const sodium = _sodium;
+    await _sodium.ready;
+    const sodium = _sodium;
 
-      const publicKeyMaterial = await handshake.createPrekeyBundle(100, false, (publicKey) => {
-          const signatureHex = sign(signingKey, publicKey);
-          return sodium.from_hex(signatureHex);
-      });
-      saveHandshake();
-      const oneTimePrekeysPromises = publicKeyMaterial.oneTimePrekeyPairs.map(async (otp) => base64EncodedString(otp));
-      return { publicKeyMaterial, oneTimePrekeys: await Promise.all(oneTimePrekeysPromises) };
+    const publicKeyMaterial = await handshake.createPrekeyBundle(100, false, (publicKey) => {
+      const signatureHex = sign(signingKey, publicKey);
+      return sodium.from_hex(signatureHex);
+    });
+    saveHandshake();
+    const oneTimePrekeysPromises = publicKeyMaterial.oneTimePrekeyPairs.map(async (otp) => base64EncodedString(otp));
+    return { publicKeyMaterial, oneTimePrekeys: await Promise.all(oneTimePrekeysPromises) };
   }
 
   function conversationInvitationFingerprint(conversationInvitation) {
-      return conversationInvitation.identityKey + conversationInvitation.ephemeralKey + conversationInvitation.usedOneTimePrekey;
+    return conversationInvitation.identityKey + conversationInvitation.ephemeralKey + conversationInvitation.usedOneTimePrekey;
   }
 
-  // export
   function allowCookies() {
-      cookiesAllowed = true;
-      saveHandshake();
+    cookiesAllowed = true;
+    saveHandshake();
   }
 
   async function generateKeys() {
-      signingKey = ec.genKeyPair();
-      const publicPEM = keyEncoder.encodePublic(signingKey.getPublic('hex'), 'raw', 'pem');
-      const base64PublicSigningKey = await base64EncodedString(publicPEM);
+    signingKey = ec.genKeyPair();
+    const publicPEM = keyEncoder.encodePublic(signingKey.getPublic('hex'), 'raw', 'pem');
+    const base64PublicSigningKey = await base64EncodedString(publicPEM);
 
-      handshake = await X3DH.init();
-      const { publicKeyMaterial, oneTimePrekeys } = await createPrekeyBundle();
-      saveHandshake();
+    handshake = await X3DH.init();
+    const { publicKeyMaterial, oneTimePrekeys } = await createPrekeyBundle();
+    saveHandshake();
 
-      return {
-          signingKey,
-          publicSigningKey: base64PublicSigningKey,
-          userPublicKeys: {
-              signingKey: base64PublicSigningKey,
-              identityKey: await base64EncodedString(publicKeyMaterial.identityKey),
-              signedPrekey: await base64EncodedString(publicKeyMaterial.signedPrekey),
-              prekeySignature: await base64EncodedString(publicKeyMaterial.prekeySignature),
-              oneTimePrekeys,
-          },
-      };
+    return {
+      signingKey,
+      publicSigningKey: base64PublicSigningKey,
+      userPublicKeys: {
+        signingKey: base64PublicSigningKey,
+        identityKey: await base64EncodedString(publicKeyMaterial.identityKey),
+        signedPrekey: await base64EncodedString(publicKeyMaterial.signedPrekey),
+        prekeySignature: await base64EncodedString(publicKeyMaterial.prekeySignature),
+        oneTimePrekeys,
+      },
+    };
   }
   function user(user) {
-      return {
-          async updatePrekeyBundle() {
-              const { publicKeyMaterial, oneTimePrekeys } = await createPrekeyBundle();
-              user.keys.userPublicKeys = {
-                  signingKey: user.keys.publicSigningKey,
-                  identityKey: await base64EncodedString(publicKeyMaterial.identityKey),
-                  signedPrekey: await base64EncodedString(publicKeyMaterial.signedPrekey),
-                  prekeySignature: await base64EncodedString(publicKeyMaterial.prekeySignature),
-                  oneTimePrekeys,
-              };
-              return user;
-          },
-          async authHeader() {
-              await _sodium.ready;
-              const sodium = _sodium;
-              const now = new Date();
-              const validUntil = new Date();
-              validUntil.setSeconds(now.getSeconds() + 120);
-              const nonce = await base64EncodedString(sodium.randombytes_buf(16));
-              return jwt(user.keys.signingKey, {
-                  iss: user.userId, iat: now.getTime() / 1000, exp: validUntil.getTime() / 1000, nonce,
-              });
-          },
-      };
+    return {
+      async updatePrekeyBundle() {
+        const { publicKeyMaterial, oneTimePrekeys } = await createPrekeyBundle();
+        user.keys.userPublicKeys = {
+          signingKey: user.keys.publicSigningKey,
+          identityKey: await base64EncodedString(publicKeyMaterial.identityKey),
+          signedPrekey: await base64EncodedString(publicKeyMaterial.signedPrekey),
+          prekeySignature: await base64EncodedString(publicKeyMaterial.prekeySignature),
+          oneTimePrekeys,
+        };
+        return user;
+      },
+      async authHeader() {
+        await _sodium.ready;
+        const sodium = _sodium;
+        const now = new Date();
+        const validUntil = new Date();
+        validUntil.setSeconds(now.getSeconds() + 120);
+        const nonce = await base64EncodedString(sodium.randombytes_buf(16));
+        return jwt(user.keys.signingKey, {
+          iss: user.userId, iat: now.getTime() / 1000, exp: validUntil.getTime() / 1000, nonce,
+        });
+      },
+    };
   }
   function group(groupKey) {
-      return {
-          async decrypt(ciphertext, enc) {
-              return decryptSymmetric(groupKey, ciphertext, enc);
-          },
-          async decryptAndParse(ciphertext) {
-              return JSON.parse(await decryptSymmetric(groupKey, ciphertext));
-          },
-          async encrypt(plaintext) {
-              return encryptSymmetric(groupKey, JSON.stringify(plaintext));
-          },
-          async generateTokenKey(userPublicSigningKey64) {
-              const userPublicSigningKey = await dataFromBase64(userPublicSigningKey64);
-              const groupKeyBytes = await dataFromBase64(groupKey);
-              const inputKeyingMaterial = new Uint8Array(groupKeyBytes.length + userPublicSigningKey.length);
-              inputKeyingMaterial.set(groupKeyBytes);
-              inputKeyingMaterial.set(userPublicSigningKey, groupKeyBytes.length);
-              const tokenKey = await deriveHKDFKey(inputKeyingMaterial, 32);
-              await _sodium.ready;
-              const sodium = _sodium;
-              return sodium.to_base64(tokenKey);
-          },
-      };
+    return {
+      async decrypt(ciphertext, enc) {
+        return decryptSymmetric(groupKey, ciphertext, enc);
+      },
+      async decryptAndParse(ciphertext) {
+        return JSON.parse(await decryptSymmetric(groupKey, ciphertext));
+      },
+      async encrypt(plaintext) {
+        return encryptSymmetric(groupKey, JSON.stringify(plaintext));
+      },
+      async generateTokenKey(userPublicSigningKey64) {
+        const userPublicSigningKey = await dataFromBase64(userPublicSigningKey64);
+        const groupKeyBytes = await dataFromBase64(groupKey);
+        const inputKeyingMaterial = new Uint8Array(groupKeyBytes.length + userPublicSigningKey.length);
+        inputKeyingMaterial.set(groupKeyBytes);
+        inputKeyingMaterial.set(userPublicSigningKey, groupKeyBytes.length);
+        const tokenKey = await deriveHKDFKey(inputKeyingMaterial, 32);
+        await _sodium.ready;
+        const sodium = _sodium;
+        return sodium.to_base64(tokenKey);
+      },
+    };
   }
 
   async function decryptPayloadContainer(envelope) {
