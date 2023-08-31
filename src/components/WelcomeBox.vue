@@ -65,7 +65,7 @@ if (group.value !== 'notFound') {
     log.trace('Migrate old cookies')
     await crypto.migrateStorage(groupId);
 
-    // user.value = await crypto.loadFromStorage(groupId);
+    user.value = await crypto.loadFromStorage(groupId);
     if (user.value !== null) {
       log.info('Found user data in cookie')
         api.setAuthHeader(user.value);

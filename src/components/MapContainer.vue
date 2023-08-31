@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { MapboxMap, MapboxNavigationControl, MapboxMarker, MapboxGeolocateControl } from "@studiometa/vue-mapbox-gl"
+import { MapboxMap, MapboxNavigationControl, MapboxMarker } from "@studiometa/vue-mapbox-gl"
 import { useI18n } from 'vue-i18n'
 import MapMarkers from './MapMarkers.vue';
 import iso3316 from '../utils/iso3316.json'
@@ -39,28 +39,28 @@ const emit = defineEmits(['show-info', 'show-meeting-point'])
 
 watch(
   props.locations, () => {
-      autoFitMap();
+    autoFitMap();
   },
 )
 
 const availableLocations = computed(() => {
-    return Object.values(props.locations).filter((location) => location.coordinates !== undefined);
+  return Object.values(props.locations).filter((location) => location.coordinates !== undefined);
 })
 const ownCoordinates = computed(() => {
-    return [props.ownLocation.longitude, props.ownLocation.latitude];
+  return [props.ownLocation.longitude, props.ownLocation.latitude];
 })
 const padding = computed(() => {
-    const padHorizontal = Math.min(window.innerWidth / 8, 100);
-    const padVertical = Math.min(window.innerHeight / 8, 100);
-    return {
-        top: padVertical, bottom: padVertical, left: padHorizontal, right: padHorizontal,
-    };
+  const padHorizontal = Math.min(window.innerWidth / 8, 100);
+  const padVertical = Math.min(window.innerHeight / 8, 100);
+  return {
+    top: padVertical, bottom: padVertical, left: padHorizontal, right: padHorizontal,
+  };
 })
 const meetingPointCoordinates = computed(() => {
-    if (props.group.internalSettings.meetingPoint !== undefined) {
-        return [props.group.internalSettings.meetingPoint.longitude, props.group.internalSettings.meetingPoint.latitude];
-    }
-    return undefined;
+  if (props.group.internalSettings.meetingPoint !== undefined) {
+    return [props.group.internalSettings.meetingPoint.longitude, props.group.internalSettings.meetingPoint.latitude];
+  }
+  return undefined;
 })
 
 const accessToken = import.meta.env.VITE_MAPBOX_API_KEY
@@ -80,9 +80,6 @@ function createdHandler(mapInstance) {
 }
 function onLoadMap(mapInstance) {
   mapActions.value = mapInstance
-  mapInstance.flyTo({ 
-    center: [10.538372247, 51.106318072], 
-    zoom: 4 })
 
   // const autoFitToggle = new AutoFitToggleControl();
   // autoFitToggle.button.onclick = setAutoFitting;
@@ -103,38 +100,38 @@ function onLoadMap(mapInstance) {
   autoFitMap() // Test, eigentlich ersetzen mit Zeile drüber
 }
 function setAutoFitting(newValue = null) {
-    if (typeof newValue === 'boolean') {
-        autoFitting.value = newValue;
-    } else {
-        autoFitting.value = !autoFitting.value
-    }
-    if (autoFitting.value) {
-        document.getElementById('autoFitToggleButton').classList.add('active');
-        autoFitMap();
-    } else {
-        document.getElementById('autoFitToggleButton').classList.remove('active');
-    }
+  if (typeof newValue === 'boolean') {
+    autoFitting.value = newValue;
+  } else {
+    autoFitting.value = !autoFitting.value
+  }
+  if (autoFitting.value) {
+    document.getElementById('autoFitToggleButton').classList.add('active');
+    autoFitMap();
+  } else {
+    document.getElementById('autoFitToggleButton').classList.remove('active');
+  }
 }
 function autoFitMap() {
-    if (mapActions.value === undefined || !autoFitting.value) { return; }
-    const coordinates = availableLocations.value.map((location) => location.coordinates);
-    if (meetingPointCoordinates.value !== undefined) {
-        coordinates.push(meetingPointCoordinates.value);
-    }
-    if (props.ownLocation !== null) {
-        coordinates.push(ownCoordinates.value);
-    }
+  if (mapActions.value === undefined || !autoFitting.value) { return; }
+  const coordinates = availableLocations.value.map((location) => location.coordinates);
+  if (meetingPointCoordinates.value !== undefined) {
+    coordinates.push(meetingPointCoordinates.value);
+  }
+  if (props.ownLocation !== null) {
+    coordinates.push(ownCoordinates.value);
+  }
 
-    switch (coordinates.length) {
-    case 0:
-        fitToUserCountry();
-        break;
-    case 1:
-        mapActions.value.flyTo({ center: coordinates[0], zoom: 13 });
-        break;
-    default:
-        mapActions.value.fitBounds(coordinates, { padding: padding.value });
-    }
+  switch (coordinates.length) {
+  case 0:
+    fitToUserCountry();
+    break;
+  case 1:
+    mapActions.value.flyTo({ center: coordinates[0], zoom: 13 });
+    break;
+  default:
+    mapActions.value.fitBounds(coordinates, { padding: padding.value });
+  }
 }
 function fitToUserCountry() {
   const region = new Intl.Locale(navigator.language);
@@ -152,6 +149,7 @@ function fitToUserCountry() {
   mapActions.value.flyTo({ center: [10.538372247, 51.106318072], zoom: 4 });
 }
 
+// sind die nächsten zwei Zeilen noch relevant?
 // We need to set mapbox-gl library here in order to use it in template
 // const mapbox = Mapbox;
 </script>
@@ -165,7 +163,6 @@ function fitToUserCountry() {
       @mb-created="createdHandler"
     >
       <MapboxNavigationControl position="top-right" />
-      <MapboxGeolocateControl />
       <MapMarkers :availableLocations="availableLocations" @show-info="showInfo"/>
       <MapboxMarker v-if="meetingPointCoordinates !== undefined" :lngLat="meetingPointCoordinates" @mb-click="emit('show-meeting-point')" />
       <MapboxMarker v-if="props.ownLocation != null" :lngLat="ownCoordinates" popup>

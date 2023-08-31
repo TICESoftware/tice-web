@@ -475,7 +475,7 @@ export const useCryptoStore = defineStore('crypto', () => {
         return null;
     }
 
-    const user = JSON.parse(storedUserData);
+    const user = JSON.parse(storedUserData)._value;
     signingKey = ec.keyFromPrivate(user.keys.signingKey.priv);
     user.keys.signingKey = signingKey;
 

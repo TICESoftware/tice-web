@@ -79,26 +79,26 @@ function showUserSettings() {
     showClose: true,
     beforeClose: (action, instance, done) => {
       // const newName = instance.$refs.input.value;
-      // const newName = instance.value;
-      // const oldName = groupmembers.getUsername(props.group, props.user.userId);
-      // if (instance.loading === true || newName === null || newName === oldName) {
-      //   done();
-      // } else {
-      //   instance.loading = true;
-        // const loading = this.$loading({ target: instance.$el.childNodes[0] });
-        // api.user(props.user.userId).update({ publicName: newName })
-        //   .then(() => {
-        //     emit('update-username', newName);
-        //     done();
-        //   }).catch((error) => {
-        //     ElMessage.error(`${error}`);
-        //     log.error(`Couldn't update user: ${error}`);
-        //   })
-        //   .finally(() => {
-            // loading.close();
-      //       instance.loading = false;
-      //     });
-      // }
+      const newName = null // mit Zeile drüber ersetzen
+      const oldName = groupmembers.getUsername(props.group, props.user.userId);
+      if (instance.loading === true || newName === null || newName === oldName) {
+        done();
+      } else {
+        instance.loading = true;
+        const loading = this.$loading({ target: instance.$el.childNodes[0] });
+        api.user(props.user.userId).update({ publicName: newName })
+          .then(() => {
+            emit('update-username', newName);
+            done();
+          }).catch((error) => {
+            ElMessage.error(`${error}`);
+            log.error(`Couldn't update user: ${error}`);
+          })
+          .finally(() => {
+            loading.close();
+            instance.loading = false;
+          });
+      }
       done()
     },
   }).catch(() => {});

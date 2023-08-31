@@ -277,7 +277,7 @@ async function updateShareLocation(newValue) {
   // this.$tracking.changeLocationTracking(newValue);
   shareLocation.value = newValue;
   localStorage.setItem(`tice.sharingLocation.${group.value.groupId}`, newValue);
-  setGeolocationWatch(shareLocation);
+  setGeolocationWatch(shareLocation.value);
   if (newValue === false) {
     lastLocation.value = null;
     window.clearTimeout(sendOwnLocationTimer.value);

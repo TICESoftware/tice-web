@@ -17,10 +17,6 @@ app.use(ElementPlus)
 app.mount('#app')
 
 // old main.js file ->
-// import Vue from 'vue';
-// import App from './App.vue';
-
-// import 'element-ui/lib/theme-chalk/index.css';
 // import {
 //     Collapse, CollapseItem, Row, Col, Switch, Dialog, Button, Message, MessageBox, Drawer, Loading, Input, FormItem, Form,
 // } from 'element-ui';
@@ -53,7 +49,3 @@ app.mount('#app')
 // beekeeper.pageView();
 
 // Vue.config.productionTip = false;
-// new Vue({
-//     render: (h) => h(App),
-//     i18n,
-// }).$mount('#app');
