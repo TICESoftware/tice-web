@@ -1,41 +1,38 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-// import {
-//     MglMap, MglMarker, MglNavigationControl, MglPopup,
-// } from 'vue-mapbox';
-import { MapboxMap, MapboxNavigationControl, MapboxMarker, MapboxPopup, MapboxGeolocateControl } from "vue-mapbox-ts"
+import { MapboxMap, MapboxNavigationControl, MapboxMarker, MapboxGeolocateControl } from "@studiometa/vue-mapbox-gl"
 import { useI18n } from 'vue-i18n'
 import MapMarkers from './MapMarkers.vue';
-// import iso3316 from '../utils/iso3316.json';
-// import countriesBoundingBoxes from '../utils/countriesBoundingBoxes.json';
+import iso3316 from '../utils/iso3316.json'
+import countriesBoundingBoxes from '../utils/countriesBoundingBoxes.json';
 
 const { t } = useI18n();
 
-// class AutoFitToggleControl {
-//     constructor() {
-//         this.map = undefined;
-//         this.container = document.createElement('div');
-//         this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
-//         this.button = document.createElement('button');
-//         this.button.id = 'autoFitToggleButton';
-//         this.button.className = 'mapboxgl-ctrl-auto-fit active';
-//         this.button.type = 'button';
-//         const span = document.createElement('span');
-//         span.className = 'mapboxgl-ctrl-icon';
-//         this.button.appendChild(span);
-//         this.container.appendChild(this.button);
-//     }
+class AutoFitToggleControl {
+    // constructor() {
+    //     this.map = undefined;
+    //     this.container = document.createElement('div');
+    //     this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+    //     this.button = document.createElement('button');
+    //     this.button.id = 'autoFitToggleButton';
+    //     this.button.className = 'mapboxgl-ctrl-auto-fit active';
+    //     this.button.type = 'button';
+    //     const span = document.createElement('span');
+    //     span.className = 'mapboxgl-ctrl-icon';
+    //     this.button.appendChild(span);
+    //     this.container.appendChild(this.button);
+    // }
 
-//     onAdd(map) {
-//         this.map = map;
-//         return this.container;
-//     }
+    // onAdd(map) {
+    //     this.map = map;
+    //     return this.container;
+    // }
 
-//     onRemove() {
-//         this.container.parentNode.removeChild(this.container);
-//         this.map = undefined;
-//     }
-// }
+    // onRemove() {
+    //     this.container.parentNode.removeChild(this.container);
+    //     this.map = undefined;
+    // }
+}
 
 const props = defineProps(['locations', 'initialLoading', 'ownLocation', 'group'])
 const emit = defineEmits(['show-info', 'show-meeting-point'])
@@ -74,25 +71,36 @@ const autoFitting = ref(true)
 function showInfo(senderId) {
   emit('show-info', props.locations[senderId]);
 }
-function onLoadMap(options) {
-    mapActions.value = options.component.actions;
 
-    // const autoFitToggle = new AutoFitToggleControl();
-    // autoFitToggle.button.onclick = setAutoFitting;
-    // options.map.addControl(autoFitToggle);
+// eventuell mit onLoadMap zusammenfügen
+function createdHandler(mapInstance) {
+  mapInstance.on('load', () => {
+    onLoadMap(mapInstance)
+  })
+}
+function onLoadMap(mapInstance) {
+  mapActions.value = mapInstance
+  mapInstance.flyTo({ 
+    center: [10.538372247, 51.106318072], 
+    zoom: 4 })
 
-    const onInteraction = (e) => {
-        if (e.originalEvent !== undefined) {
-            setAutoFitting(false);
-        }
-    };
-    options.map.on('mousedown', onInteraction);
-    options.map.on('dragstart', onInteraction);
-    options.map.on('movestart', onInteraction);
-    options.map.on('touchstart', onInteraction);
-    options.map.on('zoomstart', onInteraction);
+  // const autoFitToggle = new AutoFitToggleControl();
+  // autoFitToggle.button.onclick = setAutoFitting;
+  // mapInstance.addControl(autoFitToggle);
 
-    setAutoFitting(true);
+  const onInteraction = (e) => {
+    if (e.originalEvent !== undefined) {
+      setAutoFitting(false);
+    }
+  };
+  mapInstance.on('mousedown', onInteraction);
+  mapInstance.on('dragstart', onInteraction);
+  mapInstance.on('movestart', onInteraction);
+  mapInstance.on('touchstart', onInteraction);
+  mapInstance.on('zoomstart', onInteraction);
+
+  // setAutoFitting(true);
+  autoFitMap() // Test, eigentlich ersetzen mit Zeile drüber
 }
 function setAutoFitting(newValue = null) {
     if (typeof newValue === 'boolean') {
@@ -129,19 +137,19 @@ function autoFitMap() {
     }
 }
 function fitToUserCountry() {
-    const region = new Intl.Locale(navigator.language);
+  const region = new Intl.Locale(navigator.language);
 
-    // if (navigator.language && region.region) {
-    //     const region3 = iso3316[region.region];
-    //     const boundingBox = countriesBoundingBoxes[region3];
-    //     if (boundingBox) {
-    //         this.mapActions.fitBounds([boundingBox.sw, boundingBox.ne], { padding: this.padding });
-    //         return;
-    //     }
-    // }
+  if (navigator.language && region.region) {
+    const region3 = iso3316[region.region];
+    const boundingBox = countriesBoundingBoxes[region3];
+    if (boundingBox) {
+      mapActions.value.fitBounds([boundingBox.sw, boundingBox.ne], { padding: padding.value });
+      return;
+    }
+  }
 
-    // Default fallback to Europe
-    mapActions.value.flyTo({ center: [10.538372247, 51.106318072], zoom: 4 });
+  // Default fallback to Europe
+  mapActions.value.flyTo({ center: [10.538372247, 51.106318072], zoom: 4 });
 }
 
 // We need to set mapbox-gl library here in order to use it in template
@@ -150,16 +158,21 @@ function fitToUserCountry() {
 
 <template>
   <div id="map-container">
-    <MapboxMap :accessToken="accessToken" :mapStyle="mapStyle" @load="onLoadMap">
+    <MapboxMap
+      style="height: 100%; width: 100%;"
+      :accessToken="accessToken"
+      :mapStyle="mapStyle"
+      @mb-created="createdHandler"
+    >
       <MapboxNavigationControl position="top-right" />
       <MapboxGeolocateControl />
       <MapMarkers :availableLocations="availableLocations" @show-info="showInfo"/>
-      <MapboxMarker v-if="meetingPointCoordinates !== undefined" :lngLat="meetingPointCoordinates" @click="emit('show-meeting-point')" />
-      <MapboxMarker v-if="props.ownLocation != null" :lngLat="ownCoordinates">
-        <!-- <template slot="marker"><span class="avatar" style="background-color: #2980b9;height:15px;width:15px;"></span></template> -->
-        <MapboxPopup>
-          {{ t("map.myLocation") }}
-        </MapboxPopup>
+      <MapboxMarker v-if="meetingPointCoordinates !== undefined" :lngLat="meetingPointCoordinates" @mb-click="emit('show-meeting-point')" />
+      <MapboxMarker v-if="props.ownLocation != null" :lngLat="ownCoordinates" popup>
+        <span class="avatar" style="background-color: #2980b9;height:15px;width:15px;"></span>
+        <template v-slot:popup>
+          <span>{{ t("map.myLocation") }}</span>
+        </template>
       </MapboxMarker>
     </MapboxMap>
   </div>

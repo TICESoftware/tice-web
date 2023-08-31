@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-// import {
-//     MglGeojsonLayer,
-// } from 'vue-mapbox';
-import { MapboxSourceGeoJson } from "vue-mapbox-ts"
+import { MapboxSource, MapboxLayer } from "@studiometa/vue-mapbox-gl"
 
 const props = defineProps(['availableLocations'])
 const emit = defineEmits(['show-info'])
@@ -70,6 +67,7 @@ const individualAccuracyColor = computed(() => {
 })
 
 function individualLocation(event) {
+  // console.log(event.originalEvent)
   emit('show-info', event.mapboxEvent.features[0].properties.senderId);
 }
 function setCursorToPointer(event) {
@@ -78,13 +76,15 @@ function setCursorToPointer(event) {
 function resetCursor(event) {
   event.map.getCanvas().style.cursor = 'default';
 }
+
+// console.log(sourceData.value)
 </script>
 
 <template>
   <span>
-    <MglGeojsonLayer
-      sourceId="markerData"
-      :source="{
+    <MapboxSource
+      id="markerData"
+      :options="{
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
@@ -94,9 +94,10 @@ function resetCursor(event) {
         clusterRadius: 50,
         clusterMaxZoom: 14,
       }"
-      layer-id="colorLayer"
-      :layer="{
-        id: 'colorLayer',
+    />
+    <MapboxLayer
+      id="colorLayer"
+      :options="{
         type: 'circle',
         source: 'markerData',
         paint: {
@@ -110,11 +111,9 @@ function resetCursor(event) {
       @mouseenter="setCursorToPointer"
       @mouseleave="resetCursor"
     />
-    <MglGeojsonLayer
-      sourceId="markerData"
-      layer-id="nameLayer"
-      :layer="{
-        id: 'nameLayer',
+    <MapboxLayer
+      id="nameLayer"
+      :options="{
         type: 'symbol',
         source: 'markerData',
         layout: {
@@ -127,11 +126,9 @@ function resetCursor(event) {
         },
       }"
     />
-    <MglGeojsonLayer
-      sourceId="markerData"
-      layerId="cluster-count"
-      :layer="{
-        id: 'cluster-count',
+    <MapboxLayer
+      id="cluster-count"
+      :options="{
         type: 'symbol',
         source: 'markerData',
         filter: ['has', 'point_count'],
@@ -142,18 +139,19 @@ function resetCursor(event) {
         }
       }"
     />
-    <MglGeojsonLayer
-      sourceId="accuracySource"
-      :source="{
+    <MapboxSource
+      id="accuracySource"
+      :options="{
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
           features: source,
-        },
+        }
       }"
-      layerId="accuracyLayer"
-      :layer="{
-        id: 'accuracyLayer',
+    />
+    <MapboxLayer
+      id="accuracyLayer"
+      :options="{
         type: 'fill',
         source: 'accuracySource',
         paint: {

@@ -11,6 +11,7 @@
     "map.myLocation": "Mein Standort",
     "welcome.incorrectURL": "URL ist fehlerhaft.",
     "welcome.groupDoesNotExist": "Diese Gruppe existiert anscheinend nicht oder nicht mehr.",
+    "welcome.groupMemberLimitExceeded": "Die Gruppe hat ihre maximale Gruppengröße erreicht.",
     "welcome.error": "Fehler, bitte erneut probieren!",
     "welcome.errorOccured": "Ein Fehler ist aufgetreten: ",
     "welcome.groupChanged": "Die Gruppe hat sich geändert. Bitte Beitritt bestätigen!",

@@ -5,7 +5,7 @@ import WelcomeBox from './components/WelcomeBox.vue'
 import About from './components/About.vue'
 // import Chat from './components/Chat.vue'
 import ShareLocationButton from './components/ShareLocationButton.vue'
-import Map from './components/Map.vue'
+import MapContainer from './components/MapContainer.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
@@ -110,7 +110,7 @@ async function refocus(origin = 'refocus') {
     await Promise.all(promises);
     log.debug(`Handled ${messages.length} messages after ${origin}`);
     websocket.value = api.openWebsocket(receivedMessage);
-    locations.value = { ...groupmembers.filterLocations(group) };
+    locations.value = { ...groupmembers.filterLocations(group.value) };
   }
   window.clearTimeout(wsKeepAlive.value);
   wsKeepAlive.value = window.setTimeout(() => {
@@ -348,7 +348,7 @@ function showTICEInBackground() {
       @update-share-location="updateShareLocation"
       @teardown="teardown"
     />
-    <Map
+    <MapContainer
       v-if="group !== null"
       :group="group"
       :locations="locations"

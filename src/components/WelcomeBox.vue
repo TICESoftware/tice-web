@@ -54,69 +54,72 @@ if (locsplit.length < 3 || locsplit[1] !== 'group' || window.location.hash.lengt
   title.value = t('welcome.incorrectURL')
   group.value = 'notFound';
 }
-//     this.$tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
-try {
-  log.debug('Opened WebApp')
-  const groupId = locsplit[2]
-  const groupKey = await crypto.prepareGroupKey(window.location.hash.substr(1));
 
-  log.trace('Migrate old cookies')
-  await crypto.migrateStorage(groupId);
+if (group.value !== 'notFound') {
+  //     this.$tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
+  try {
+    log.debug('Opened WebApp')
+    const groupId = locsplit[2]
+    const groupKey = await crypto.prepareGroupKey(window.location.hash.substr(1));
 
-  // user.value = await crypto.loadFromStorage(groupId);
-  if (user.value !== null) {
-    log.info('Found user data in cookie')
-      api.setAuthHeader(user.value);
-  } else {
-    log.info('Creating new user')
-    user.value = await flow.createUser()
-  }
+    log.trace('Migrate old cookies')
+    await crypto.migrateStorage(groupId);
 
-  const groupScoped = await flow.prepareGroup(user.value, groupId, groupKey);
-  if (groupScoped.settings.name === undefined) {
-    const ownerName = groupmembers.getUsername(groupScoped, groupScoped.settings.owner);
-    if (['x', 's', 'z'].indexOf(ownerName.slice(-1)) > -1) {
-      groupScoped.settings.name = t('welcome.groupName.s', { ownerName });
+    // user.value = await crypto.loadFromStorage(groupId);
+    if (user.value !== null) {
+      log.info('Found user data in cookie')
+        api.setAuthHeader(user.value);
     } else {
-        groupScoped.settings.name = t('welcome.groupName', { ownerName });
+      log.info('Creating new user')
+      user.value = await flow.createUser()
     }
-  }
 
-  if (user.value.userId in groupScoped.members) {
-    buttonLoading.value = true;
-    // this.$tracking.loadFromStorage();
-    emit('register-complete', { user: user.value, group: groupScoped });
-    refl_dialogVisible.value = false;
-  } else {
-      title.value = groupScoped.settings.name;
-      group.value = groupScoped;
+    const groupScoped = await flow.prepareGroup(user.value, groupId, groupKey);
+    if (groupScoped.settings.name === undefined) {
+      const ownerName = groupmembers.getUsername(groupScoped, groupScoped.settings.owner);
+      if (['x', 's', 'z'].indexOf(ownerName.slice(-1)) > -1) {
+        groupScoped.settings.name = t('welcome.groupName.s', { ownerName });
+      } else {
+          groupScoped.settings.name = t('welcome.groupName', { ownerName });
+      }
+    }
+
+    if (user.value.userId in groupScoped.members) {
+      buttonLoading.value = true;
+      // this.$tracking.loadFromStorage();
+      emit('register-complete', { user: user.value, group: groupScoped });
+      refl_dialogVisible.value = false;
+    } else {
+        title.value = groupScoped.settings.name;
+        group.value = groupScoped;
+    }
+  } catch (error) {
+    if ((`${error}`).indexOf('Group not found') > -1) {
+      log.warning(`Group not found: ${window.location.href}`)
+      title.value = t('welcome.groupDoesNotExist')
+      group.value = 'notFound'
+    } else if ((`${error}`).indexOf('groupMemberLimitExceeded') > -1) {
+      log.warning('The group has exceeded the maximum member limit')
+      title.value = t('welcome.groupMemberLimitExceeded')
+      group.value = 'error'
+    } else if ((`${error}`).indexOf('User Authentication failed') > -1) {
+      log.warning('User authentication failed - probably user from cookie was deleted')
+      localStorage.clear()
+      window.location.reload()
+    } else {
+      log.error(`Error on WB-created: ${error}`)
+      ElMessage({
+          type: 'error',
+          message: t('welcome.errorOccured') + error,
+          showClose: true,
+          duration: 0,
+      });
+      title.value = t('welcome.error');
+      group.value = 'error';
+    }
+  } finally {
+    buttonLoading.value = false;
   }
-} catch (error) {
-  if ((`${error}`).indexOf('Group not found') > -1) {
-    log.warning(`Group not found: ${window.location.href}`)
-    title.value = t('welcome.groupDoesNotExist')
-    group.value = 'notFound'
-  } else if ((`${error}`).indexOf('groupMemberLimitExceeded') > -1) {
-    log.warning('The group has exceeded the maximum member limit')
-    title.value = t('welcome.groupMemberLimitExceeded')
-    group.value = 'error'
-  } else if ((`${error}`).indexOf('User Authentication failed') > -1) {
-    log.warning('User authentication failed - probably user from cookie was deleted')
-    localStorage.clear()
-    window.location.reload()
-  } else {
-    log.error(`Error on WB-created: ${error}`)
-    ElMessage({
-        type: 'error',
-        message: t('welcome.errorOccured') + error,
-        showClose: true,
-        duration: 0,
-    });
-    title.value = t('welcome.error');
-    group.value = 'error';
-  }
-} finally {
-  buttonLoading.value = false;
 }
 
 function openDeepLink() {
