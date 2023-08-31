@@ -9,7 +9,7 @@ import { useGroupMemberStore } from '@/stores/GroupMemberStore'
 import { useFlowStore } from '@/stores/FlowStore'
 import { useAPIRequestStore } from '@/stores/APIRequestStore'
 import { useCryptoStore } from '@/stores/CryptoStore'
-// import { setLanguage } from '../utils/i18n'
+import { setLanguage } from '../utils/i18n'
 
 const { t } = useI18n();
 const groupmembers = useGroupMemberStore()
@@ -44,7 +44,7 @@ const webViewOniOS = computed(() => {
   return /iphone|ipod|ipad/.test(ua)
 })
 
-//   await setLanguage(new Intl.Locale(navigator.language).language);
+await setLanguage(new Intl.Locale(navigator.language).language);
 
 if (window.location.pathname.length < 5) {
     window.location.href = 'https://ticeapp.com'

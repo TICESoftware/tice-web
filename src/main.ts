@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { createI18n } from 'vue-i18n'
-import { languages } from "@/lang"
+import { i18n } from './utils/i18n'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
@@ -10,13 +9,6 @@ import { Buffer } from 'buffer'
 globalThis.Buffer = Buffer
 
 const pinia = createPinia()
-
-const i18n = createI18n({
-  legacy: false,
-  locale: 'de',
-  fallbackLocale: 'de',
-  messages: languages
-})
 
 const app = createApp(App)
 app.use(pinia)
@@ -27,8 +19,6 @@ app.mount('#app')
 // old main.js file ->
 // import Vue from 'vue';
 // import App from './App.vue';
-
-// import { i18n } from './utils/i18n';
 
 // import 'element-ui/lib/theme-chalk/index.css';
 // import {
@@ -57,28 +47,10 @@ app.mount('#app')
 // import dateFnsDE from 'date-fns/locale/de';
 // Vue.use(VueTimeago, { locale: 'de', autoUpdate: true, locales: { de: dateFnsDE } });
 
-// import GroupInfo from './components/GroupInfo.vue';
-// Vue.component('group-info', GroupInfo);
-
-// import api from './utils/APIRequestManager';
-// Vue.prototype.$api = api;
-
 // import beekeeper from './utils/Beekeeper';
 // Vue.prototype.$tracking = beekeeper;
 // beekeeper.sessionStart(navigator.language);
 // beekeeper.pageView();
-
-// import crypto from './utils/CryptoManager';
-// Vue.prototype.$crypto = crypto;
-
-// import flow from './utils/FlowManager';
-// Vue.prototype.$flow = flow;
-
-// import groupmembers from './utils/GroupMemberManager';
-// Vue.prototype.$groupmembers = groupmembers;
-
-// import Logger from './utils/Logger';
-// Vue.prototype.$log = Logger;
 
 // Vue.config.productionTip = false;
 // new Vue({
