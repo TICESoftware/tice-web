@@ -5,6 +5,8 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import App from './App.vue'
 import { Buffer } from 'buffer'
+import timeago from 'vue-timeago3'
+import { de } from 'date-fns/locale'
 
 globalThis.Buffer = Buffer
 
@@ -14,6 +16,7 @@ const app = createApp(App)
 app.use(pinia)
 app.use(i18n)
 app.use(ElementPlus)
+app.use(timeago, { locale: de })
 app.mount('#app')
 
 // old main.js file ->

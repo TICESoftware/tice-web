@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { MapboxSource, MapboxLayer } from "@studiometa/vue-mapbox-gl"
 
-const props = defineProps(['availableLocations'])
+const props = defineProps(['availableLocations', 'mapActions'])
 const emit = defineEmits(['show-info'])
 
 const source = computed(() => {
@@ -67,14 +67,13 @@ const individualAccuracyColor = computed(() => {
 })
 
 function individualLocation(event) {
-  // console.log(event.originalEvent)
-  emit('show-info', event.mapboxEvent.features[0].properties.senderId);
+  emit('show-info', event.features[0].properties.senderId);
 }
-function setCursorToPointer(event) {
-  event.map.getCanvas().style.cursor = 'pointer';
+function setCursorToPointer() {
+  props.mapActions.getCanvas().style.cursor = 'pointer';
 }
-function resetCursor(event) {
-  event.map.getCanvas().style.cursor = 'default';
+function resetCursor() {
+  props.mapActions.getCanvas().style.cursor = 'default';
 }
 
 // console.log(sourceData.value)
@@ -107,9 +106,9 @@ function resetCursor(event) {
           'circle-stroke-width': 3,
         },
       }"
-      @click="individualLocation"
-      @mouseenter="setCursorToPointer"
-      @mouseleave="resetCursor"
+      @mb-click="individualLocation"
+      @mb-mouseenter="setCursorToPointer"
+      @mb-mouseleave="resetCursor"
     />
     <MapboxLayer
       id="nameLayer"

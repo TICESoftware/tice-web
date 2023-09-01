@@ -325,7 +325,7 @@ function showAbout() {
 }
 function showTICEInBackground() {
   log.trace('TICE was in background');
-  ElMessage.alert(t('background.text'), t('background.title'), {
+  ElMessageBox.alert(t('background.text'), t('background.title'), {
     showClose: true,
     closeOnClickModal: true,
     closeOnPressEscape: true,
@@ -369,7 +369,8 @@ function showTICEInBackground() {
     <el-drawer
       :title="drawer.title"
       v-model="drawer.visible"
-      direction="btt" size="7.8em" :modal="false">
+      direction="btt" size="7.8em" :modal="false"
+    >
       <span v-html="drawer.content" /><br>
       <timeago :datetime="drawer.time" :autoUpdate="10" :converterOptions="{ includeSeconds: true }" />
     </el-drawer>

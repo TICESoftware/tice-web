@@ -40,6 +40,7 @@
     "sodium-hkdf": "^1.0.0",
     "vue": "^3.3.4",
     "vue-i18n": "^9.2.2",
+    "vue-timeago3": "^2.3.1",
     "x3dh": "^1.0.0"
   },
   "devDependencies": {
