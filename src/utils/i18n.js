@@ -1,6 +1,7 @@
 import { useLoggerStore } from '@/stores/LoggerStore'
 import { createI18n } from 'vue-i18n'
 import { languages } from "@/lang"
+import { de, enUS } from 'date-fns/locale'
 
 export const i18n = createI18n({
   legacy: false,
@@ -9,10 +10,16 @@ export const i18n = createI18n({
   messages: languages
 })
 
+export let timeagoLocale = enUS
+
 const loadedLanguages = ['en', 'de'];
 function setI18nLanguage(lang) {
     i18n.global.locale.value = lang;
-    // Vue.prototype.$timeago.locale = lang;
+    if (lang === 'de') {
+      timeagoLocale = de
+    } else {
+      timeagoLocale = enUS
+    }
     // document.querySelector('html').setAttribute('lang', lang);
     return lang;
 }

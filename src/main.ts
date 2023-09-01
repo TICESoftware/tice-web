@@ -6,7 +6,6 @@ import 'element-plus/dist/index.css'
 import App from './App.vue'
 import { Buffer } from 'buffer'
 import timeago from 'vue-timeago3'
-import { de } from 'date-fns/locale'
 
 globalThis.Buffer = Buffer
 
@@ -16,7 +15,7 @@ const app = createApp(App)
 app.use(pinia)
 app.use(i18n)
 app.use(ElementPlus)
-app.use(timeago, { locale: de })
+app.use(timeago)
 app.mount('#app')
 
 // old main.js file ->
@@ -41,10 +40,6 @@ app.mount('#app')
 
 // import Chat from 'vue-beautiful-chat';
 // Vue.use(Chat);
-
-// import VueTimeago from 'vue-timeago';
-// import dateFnsDE from 'date-fns/locale/de';
-// Vue.use(VueTimeago, { locale: 'de', autoUpdate: true, locales: { de: dateFnsDE } });
 
 // import beekeeper from './utils/Beekeeper';
 // Vue.prototype.$tracking = beekeeper;

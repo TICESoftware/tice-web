@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import MapMarkers from './MapMarkers.vue';
 import iso3316 from '../utils/iso3316.json'
 import countriesBoundingBoxes from '../utils/countriesBoundingBoxes.json';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const { t } = useI18n();
 
@@ -90,7 +91,7 @@ function onLoadMap(mapInstance) {
       setAutoFitting(false);
     }
   };
-  
+
   mapInstance.on('mousedown', onInteraction);
   mapInstance.on('dragstart', onInteraction);
   mapInstance.on('movestart', onInteraction);

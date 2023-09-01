@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { MapboxSource, MapboxLayer } from "@studiometa/vue-mapbox-gl"
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 const props = defineProps(['availableLocations', 'mapActions'])
 const emit = defineEmits(['show-info'])

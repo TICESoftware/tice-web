@@ -13,6 +13,7 @@ import { useAPIRequestStore } from '@/stores/APIRequestStore'
 import { useLoggerStore } from '@/stores/LoggerStore'
 import { useFlowStore } from '@/stores/FlowStore'
 import { useCryptoStore } from '@/stores/CryptoStore'
+import { timeagoLocale } from './utils/i18n.js'
 
 const groupmembers = useGroupMemberStore()
 const { t } = useI18n();
@@ -372,7 +373,7 @@ function showTICEInBackground() {
       direction="btt" size="7.8em" :modal="false"
     >
       <span v-html="drawer.content" /><br>
-      <timeago :datetime="drawer.time" :autoUpdate="10" :converterOptions="{ includeSeconds: true }" />
+      <timeago :locale="timeagoLocale" :datetime="drawer.time" :autoUpdate="10" :converterOptions="{ includeSeconds: true }" />
     </el-drawer>
     <!-- <Chat 
       v-if="group !== null"
