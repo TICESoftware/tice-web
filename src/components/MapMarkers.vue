@@ -44,7 +44,7 @@ const sourceData = computed(() => {
 })
 const individualColor = computed(() => {
   if (props.availableLocations.length === 0) {
-    return '#ffffff';
+    return '#888888';
   }
   const colors = ['match', ['get', 'senderId']];
   props.availableLocations.forEach((location) => {
@@ -56,7 +56,7 @@ const individualColor = computed(() => {
 })
 const individualAccuracyColor = computed(() => {
   if (props.availableLocations.length === 0) {
-    return '#ffffff';
+    return '#A0A0A0';
   }
   const colors = ['match', ['get', 'senderId']];
   props.availableLocations.forEach((location) => {
