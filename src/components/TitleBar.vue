@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import GroupInfo from './GroupInfo.vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
 import { useAPIRequestStore } from '@/stores/APIRequestStore'
@@ -78,14 +78,13 @@ function showUserSettings() {
     showConfirmButton: false,
     showClose: true,
     beforeClose: (action, instance, done) => {
-      // const newName = instance.$refs.input.value;
-      const newName = null // mit Zeile drüber ersetzen
+      const newName = instance.inputValue;
       const oldName = groupmembers.getUsername(props.group, props.user.userId);
       if (instance.loading === true || newName === null || newName === oldName) {
         done();
       } else {
         instance.loading = true;
-        const loading = this.$loading({ target: instance.$el.childNodes[0] });
+        // const loading = ElLoading({ target: instance.$el.childNodes[0] });
         api.user(props.user.userId).update({ publicName: newName })
           .then(() => {
             emit('update-username', newName);
@@ -95,7 +94,7 @@ function showUserSettings() {
             log.error(`Couldn't update user: ${error}`);
           })
           .finally(() => {
-            loading.close();
+            // loading.close();
             instance.loading = false;
           });
       }
