@@ -134,7 +134,13 @@ export const useFlowStore = defineStore('flow', () => {
         });
       }
       const data = { userId: user.userId, authHeader: await crypto.user(user).authHeader(), groups };
-      navigator.sendBeacon(`${api.httpBaseURL}/user/${user.userId}/teardown`, JSON.stringify(data));
+      const res = await fetch(`${api.httpBaseURL}/user/${user.userId}/teardown`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+      if (res.ok !== true) {
+        throw new Error(`Error tearing down user`);
+      }
       localStorage.clear();
     }
   }
