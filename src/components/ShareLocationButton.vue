@@ -36,9 +36,17 @@ function updateShareLocationStatus() {
 
 <template>
   <div id="shareLocationButtonContainer">
-    <el-button id="shareLocationButton" round v-on:click="updateShareLocationStatus">
-      <div id="shareLocationText">{{ shareLocationText }}</div>
-      <div id="shareLocationSubText">{{ shareLocationSubText }}</div>
+    <el-button
+      id="shareLocationButton"
+      :style="`height: ${shareLocationSubText != '' ? 59 : 44}px`"
+      round
+      v-on:click="updateShareLocationStatus"
+    >
+      <div>
+        <div id="shareLocationText">{{ shareLocationText }}</div>
+        <div id="shareLocationSubText">{{ shareLocationSubText }}</div>
+      </div>
+
     </el-button>
   </div>
 </template>
@@ -54,6 +62,8 @@ function updateShareLocationStatus() {
   border-radius: 30px;
   padding-left: 5%;
   padding-right: 5%;
+  padding-top: 12px;
+  padding-bottom: 12px;
   background-color: #0675bb;
   margin-left: auto;
   margin-right: auto;
