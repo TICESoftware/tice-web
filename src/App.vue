@@ -370,7 +370,7 @@ function showTICEInBackground() {
     <el-drawer
       :title="drawer.title"
       v-model="drawer.visible"
-      direction="btt" size="7.8em" :modal="false"
+      direction="btt" size="7.8em" :modal="true"
     >
       <span v-html="drawer.content" /><br>
       <timeago :locale="timeagoLocale" :datetime="drawer.time" :autoUpdate="10" :converterOptions="{ includeSeconds: true }" />
@@ -441,6 +441,9 @@ html, body, #app {
   background-color: rgba(255,255,255,0.3);
   border-radius: 5px;
   padding:5px 10px;
+}
+.el-overlay {
+  background-color: rgba(0,0,0,0.05);
 }
 .el-drawer {
   text-align: left;
