@@ -10,29 +10,29 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const { t } = useI18n();
 
 class AutoFitToggleControl {
-    // constructor() {
-    //     this.map = undefined;
-    //     this.container = document.createElement('div');
-    //     this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
-    //     this.button = document.createElement('button');
-    //     this.button.id = 'autoFitToggleButton';
-    //     this.button.className = 'mapboxgl-ctrl-auto-fit active';
-    //     this.button.type = 'button';
-    //     const span = document.createElement('span');
-    //     span.className = 'mapboxgl-ctrl-icon';
-    //     this.button.appendChild(span);
-    //     this.container.appendChild(this.button);
-    // }
+    constructor() {
+        this.map = undefined;
+        this.container = document.createElement('div');
+        this.container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+        this.button = document.createElement('button');
+        this.button.id = 'autoFitToggleButton';
+        this.button.className = 'mapboxgl-ctrl-auto-fit active';
+        this.button.type = 'button';
+        const span = document.createElement('span');
+        span.className = 'mapboxgl-ctrl-icon';
+        this.button.appendChild(span);
+        this.container.appendChild(this.button);
+    }
 
-    // onAdd(map) {
-    //     this.map = map;
-    //     return this.container;
-    // }
+    onAdd(map) {
+        this.map = map;
+        return this.container;
+    }
 
-    // onRemove() {
-    //     this.container.parentNode.removeChild(this.container);
-    //     this.map = undefined;
-    // }
+    onRemove() {
+        this.container.parentNode.removeChild(this.container);
+        this.map = undefined;
+    }
 }
 
 const props = defineProps(['locations', 'initialLoading', 'ownLocation', 'group'])
@@ -82,9 +82,9 @@ function createdHandler(mapInstance) {
 function onLoadMap(mapInstance) {
   mapActions.value = mapInstance
 
-  // const autoFitToggle = new AutoFitToggleControl();
-  // autoFitToggle.button.onclick = setAutoFitting;
-  // mapInstance.addControl(autoFitToggle);
+  const autoFitToggle = new AutoFitToggleControl();
+  autoFitToggle.button.onclick = setAutoFitting;
+  mapInstance.addControl(autoFitToggle);
 
   const onInteraction = (e) => {
     if (e.originalEvent !== undefined) {
@@ -107,10 +107,10 @@ function setAutoFitting(newValue) {
     autoFitting.value = !autoFitting.value
   }
   if (autoFitting.value) {
-    // document.getElementById('autoFitToggleButton').classList.add('active');
+    document.getElementById('autoFitToggleButton').classList.add('active');
     autoFitMap();
   } else {
-    // document.getElementById('autoFitToggleButton').classList.remove('active');
+    document.getElementById('autoFitToggleButton').classList.remove('active');
   }
 }
 function autoFitMap() {
