@@ -3,7 +3,7 @@ import { ref, h } from 'vue'
 import TitleBar from './components/TitleBar.vue'
 import WelcomeBox from './components/WelcomeBox.vue'
 import About from './components/About.vue'
-// import Chat from './components/Chat.vue'
+import Chat from './components/Chat.vue'
 import ShareLocationButton from './components/ShareLocationButton.vue'
 import MapContainer from './components/MapContainer.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -84,15 +84,15 @@ async function locationUpdated(position) {
     locationUpdated(position);
   }, 60000);
 }
-// async function sendChatMessage(messageText) {
-  // await this.$api.sendMessage(await this.$crypto.createSendMessageRequest(this.user, this.group.memberships, this.group.membership.serverSignedMembershipCertificate, { payloadType: 'chatMessage/v1', payload: { groupId: this.group.groupId, text: messageText } }, 'alert', false));
-//   pushChatMessage(messageText);
-// }
-// function pushChatMessage(messageText, author, datetime) {
-//   chatMessages.value.push({ author: author === undefined ? 'me' : author, text: messageText, datetime: datetime === undefined ? Date.now() : datetime });
-//   const lastChatMessages = this.chatMessages.slice(-75);
-//   localStorage.setItem(`tice.chat.${this.group.groupId}`, JSON.stringify(lastChatMessages));
-// }
+async function sendChatMessage(messageText) {
+  await api.sendMessage(await crypto.createSendMessageRequest(user.value, group.value.memberships, group.value.membership.serverSignedMembershipCertificate, { payloadType: 'chatMessage/v1', payload: { groupId: group.value.groupId, text: messageText } }, 'alert', false));
+  pushChatMessage(messageText);
+}
+function pushChatMessage(messageText, author, datetime) {
+  chatMessages.value.push({ author: author === undefined ? 'me' : author, text: messageText, datetime: datetime === undefined ? Date.now() : datetime });
+  const lastChatMessages = chatMessages.value.slice(-75);
+  localStorage.setItem(`tice.chat.${group.value.groupId}`, JSON.stringify(lastChatMessages));
+}
 function blurred() {
   // this.$tracking.sessionEnd();
   if (websocket.value) { websocket.value.close(1000); websocket.value = null; }
@@ -216,7 +216,7 @@ async function handleEnvelope(envelope) {
       }
       break;
     case 'chatMessage/v1':
-      // pushChatMessage(container.payload.text, envelope.senderId, new Date(envelope.timestamp));
+      pushChatMessage(container.payload.text, envelope.senderId, new Date(envelope.timestamp));
       break;
     default:
       log.warning(`Received unknown envelope: ${JSON.stringify(container)}`);
@@ -375,12 +375,12 @@ function showTICEInBackground() {
       <span v-html="drawer.content" /><br>
       <timeago :locale="timeagoLocale" :datetime="drawer.time" :autoUpdate="10" :converterOptions="{ includeSeconds: true }" />
     </el-drawer>
-    <!-- <Chat 
+    <Chat 
       v-if="group !== null"
       :chatMessages="chatMessages"
       :group="group"
       @send-chat-message="sendChatMessage"
-    /> -->
+    />
     <ShareLocationButton
       v-if="group !== null"
       :shareLocation="shareLocation"

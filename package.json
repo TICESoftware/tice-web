@@ -44,6 +44,7 @@
     "vue": "^3.3.4",
     "vue-i18n": "^9.2.2",
     "vue-timeago3": "^2.3.1",
+    "vue3-beautiful-chat": "github:TICESoftware/vue3-beautiful-chat",
     "x3dh": "^1.0.0"
   },
   "devDependencies": {

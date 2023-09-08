@@ -6,6 +6,7 @@ import 'element-plus/dist/index.css'
 import App from './App.vue'
 import { Buffer } from 'buffer'
 import timeago from 'vue-timeago3'
+import Chat from 'vue3-beautiful-chat'
 
 globalThis.Buffer = Buffer
 
@@ -16,6 +17,7 @@ app.use(pinia)
 app.use(i18n)
 app.use(ElementPlus)
 app.use(timeago)
+app.use(Chat)
 app.mount('#app')
 
 // old main.js file ->
