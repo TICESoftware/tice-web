@@ -6,11 +6,13 @@ import { useI18n } from 'vue-i18n'
 import { useGroupMemberStore } from '@/stores/GroupMemberStore'
 import { useAPIRequestStore } from '@/stores/APIRequestStore'
 import { useLoggerStore } from '@/stores/LoggerStore'
+import { useTrackingStore } from '@/stores/BeekeeperStore'
 
 const { t } = useI18n();
 const groupmembers = useGroupMemberStore()
 const api = useAPIRequestStore()
 const log = useLoggerStore()
+const tracking = useTrackingStore()
 
 const props = defineProps(['user', 'group', 'initialLoading', 'shareLocation', 'locationSharingUsers'])
 const emit = defineEmits(['teardown', 'update-username'])
@@ -41,7 +43,7 @@ const groupname = computed(() => {
 })
 
 function showGroupInfo() {
-  // this.$tracking.screen('GroupInfo');
+  // tracking.screen('GroupInfo');
   ElMessageBox({
     message: h(GroupInfo, {
       group: props.group, userId: props.user.userId, locationSharingUsers: props.locationSharingUsers, shareLocation: props.shareLocation
@@ -56,7 +58,7 @@ function showGroupInfo() {
 }
 
 function showUserSettings() {
-  // this.$tracking.screen('UserSettings');
+  // tracking.screen('UserSettings');
   ElMessageBox({
     message: h('div', [
       h('div', { style: { marginBottom: '1em' } }, [

@@ -10,6 +10,7 @@ import { useFlowStore } from '@/stores/FlowStore'
 import { useAPIRequestStore } from '@/stores/APIRequestStore'
 import { useCryptoStore } from '@/stores/CryptoStore'
 import { setLanguage } from '../utils/i18n'
+import { useTrackingStore } from '@/stores/BeekeeperStore'
 
 const { t } = useI18n();
 const groupmembers = useGroupMemberStore()
@@ -17,6 +18,7 @@ const log = useLoggerStore()
 const flow = useFlowStore()
 const api = useAPIRequestStore()
 const crypto = useCryptoStore()
+const tracking = useTrackingStore()
 
 const props = defineProps(['reset'])
 const emit = defineEmits(['register-complete'])
@@ -56,7 +58,7 @@ onMounted(async () => {
     group.value = 'notFound';
     return
   }
-  //     this.$tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
+  // tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
   try {
     log.debug('Opened WebApp')
     const groupId = locsplit[2]
@@ -86,7 +88,7 @@ onMounted(async () => {
 
     if (user.value.userId in groupScoped.members) {
       buttonLoading.value = true;
-      // this.$tracking.loadFromStorage();
+      // tracking.loadFromStorage();
       emit('register-complete', { user: user.value, group: groupScoped });
       refl_dialogVisible.value = false;
     } else {
@@ -140,7 +142,7 @@ async function start() {
     group.value = await flow.addUserToGroup(user.value, group.value);
     group.value.members[user.value.userId].info.publicName = publicName;
 
-    // this.$tracking.registerComplete();
+    // tracking.registerComplete();
     emit('register-complete', { user: user.value, group: group.value, sharingLocation: sharingLocation.value });
     refl_dialogVisible.value = false;
   } catch (error) {

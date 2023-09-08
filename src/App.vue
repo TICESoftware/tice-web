@@ -13,6 +13,7 @@ import { useAPIRequestStore } from '@/stores/APIRequestStore'
 import { useLoggerStore } from '@/stores/LoggerStore'
 import { useFlowStore } from '@/stores/FlowStore'
 import { useCryptoStore } from '@/stores/CryptoStore'
+import { useTrackingStore } from '@/stores/BeekeeperStore'
 import { timeagoLocale } from './utils/i18n.js'
 
 const groupmembers = useGroupMemberStore()
@@ -21,6 +22,7 @@ const api = useAPIRequestStore()
 const log = useLoggerStore()
 const flow = useFlowStore()
 const crypto = useCryptoStore()
+const tracking = useTrackingStore()
 
 const user = ref({ userId: null })
 const group = ref(null)
@@ -52,7 +54,7 @@ window.addEventListener('blur', () => {
   }
 }, false);
 window.addEventListener('focus', () => {
-  // this.$tracking.sessionStart(navigator.language);
+  // tracking.sessionStart(navigator.language);
   refocus();
 }, false);
 window.addEventListener('beforeunload', () => {
@@ -94,7 +96,7 @@ function pushChatMessage(messageText, author, datetime) {
   localStorage.setItem(`tice.chat.${group.value.groupId}`, JSON.stringify(lastChatMessages));
 }
 function blurred() {
-  // this.$tracking.sessionEnd();
+  // tracking.sessionEnd();
   if (websocket.value) { websocket.value.close(1000); websocket.value = null; }
   window.clearTimeout(wsKeepAlive.value);
   if (watchPosition.value) { navigator.geolocation.clearWatch(watchPosition.value); watchPosition.value = null; }
@@ -226,7 +228,7 @@ async function handleEnvelope(envelope) {
   }
 }
 async function registerComplete(registeredData) {
-  // this.$tracking.allowCookies();
+  // tracking.allowCookies();
   crypto.allowCookies();
   user.value = registeredData.user;
   group.value = registeredData.group;
@@ -254,7 +256,7 @@ function showMeetingPoint() {
   drawer.value.visible = true;
 }
 async function updateUsername(newName) {
-  // this.$tracking.changeName();
+  // tracking.changeName();
   group.value.members[user.value.userId].info.publicName = newName;
   group.value.members = JSON.parse(JSON.stringify(group.value.members));
   await api.sendMessage(await crypto.createSendMessageRequest(user.value, group.value.memberships, group.value.membership.serverSignedMembershipCertificate, { payloadType: 'userUpdate/v1', payload: { userId: user.value.userId } }, 'background'));
@@ -275,7 +277,7 @@ async function updateShareLocation(newValue) {
       return;
     }
   }
-  // this.$tracking.changeLocationTracking(newValue);
+  // tracking.changeLocationTracking(newValue);
   shareLocation.value = newValue;
   localStorage.setItem(`tice.sharingLocation.${group.value.groupId}`, newValue);
   setGeolocationWatch(shareLocation.value);
@@ -302,10 +304,10 @@ function setGeolocationWatch(newValue) {
         shareLocation.value = false;
         log.info('Location tracking not allowed');
         ElMessage.error(t('error.locationTrackingDenied'));
-        // this.$tracking.locationAuthorization(false);
+        // tracking.locationAuthorization(false);
       });
       if (watchPosition.value) {
-        // this.$tracking.locationAuthorization(true);
+        // tracking.locationAuthorization(true);
       }
     } else if (watchPosition.value) {
       navigator.geolocation.clearWatch(watchPosition.value);
@@ -313,7 +315,7 @@ function setGeolocationWatch(newValue) {
   }
 }
 function showAbout() {
-  // this.$tracking.screen('About');
+  // tracking.screen('About');
   ElMessageBox({
     title: t('about.title'),
     message: h(About),
