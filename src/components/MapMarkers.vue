@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { MapboxSource, MapboxLayer } from "@studiometa/vue-mapbox-gl"
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -77,7 +77,21 @@ function resetCursor() {
   props.mapActions.getCanvas().style.cursor = 'default';
 }
 
-// console.log(sourceData.value)
+watch(
+  individualColor, () => {
+    if (props.mapActions.getLayer('colorLayer')) {
+      props.mapActions.setPaintProperty('colorLayer', 'circle-color', individualColor.value)
+    }
+  }
+)
+
+watch(
+  individualAccuracyColor, () => {  
+    if (props.mapActions.getLayer('accuracyLayer')) {
+      props.mapActions.setPaintProperty('accuracyLayer', 'fill-color', individualAccuracyColor.value)
+    }
+  }
+)
 </script>
 
 <template>
