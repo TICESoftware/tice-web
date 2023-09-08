@@ -288,8 +288,8 @@ async function updateShareLocation(newValue) {
     await api.sendMessage(await crypto.createSendMessageRequest(user.value, group.value.memberships, group.value.membership.serverSignedMembershipCertificate, {
       payloadType: 'locationSharingUpdate/v1',
       payload: {
-          groupId: group.value.groupId,
-          sharingEnabled: newValue,
+        groupId: group.value.groupId,
+        sharingEnabled: newValue,
       },
     }, 'alert'));
   }
@@ -299,30 +299,30 @@ function setGeolocationWatch(newValue) {
     log.debug(`Set Geolocation Watcher to ${newValue}`);
     if (newValue === true) {
       watchPosition.value = navigator.geolocation.watchPosition(locationUpdated, () => {
-          shareLocation.value = false;
-          log.info('Location tracking not allowed');
-          ElMessage.error(t('error.locationTrackingDenied'));
-          // this.$tracking.locationAuthorization(false);
+        shareLocation.value = false;
+        log.info('Location tracking not allowed');
+        ElMessage.error(t('error.locationTrackingDenied'));
+        // this.$tracking.locationAuthorization(false);
       });
       if (watchPosition.value) {
-          // this.$tracking.locationAuthorization(true);
+        // this.$tracking.locationAuthorization(true);
       }
     } else if (watchPosition.value) {
-        navigator.geolocation.clearWatch(watchPosition.value);
+      navigator.geolocation.clearWatch(watchPosition.value);
     }
   }
 }
 function showAbout() {
-    // this.$tracking.screen('About');
-    ElMessageBox({
-        title: t('about.title'),
-        message: h(About),
-        closeOnClickModal: true,
-        closeOnPressEscape: true,
-        closeOnHashChange: false,
-        showConfirmButton: false,
-        showClose: true,
-    }).catch(() => {});
+  // this.$tracking.screen('About');
+  ElMessageBox({
+    title: t('about.title'),
+    message: h(About),
+    closeOnClickModal: true,
+    closeOnPressEscape: true,
+    closeOnHashChange: false,
+    showConfirmButton: false,
+    showClose: true,
+  }).catch(() => {});
 }
 function showTICEInBackground() {
   log.trace('TICE was in background');

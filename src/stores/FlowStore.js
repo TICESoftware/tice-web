@@ -92,7 +92,7 @@ export const useFlowStore = defineStore('flow', () => {
     const encryptedMembership = await crypto.group(group.groupKey).encrypt(group.membership);
     const tokenKey = await crypto.group(group.groupKey).generateTokenKey(user.keys.publicSigningKey);
     const addGroupMemberRequest = await api.groupInternal(group.groupId, group.groupTag, group.membership.serverSignedMembershipCertificate).addMember({
-        encryptedMembership, userId: user.userId, newTokenKey: tokenKey, notificationRecipients,
+      encryptedMembership, userId: user.userId, newTokenKey: tokenKey, notificationRecipients,
     });
     group.groupTag = addGroupMemberRequest.groupTag;
     group.members[user.userId] = { info: user };
@@ -104,7 +104,7 @@ export const useFlowStore = defineStore('flow', () => {
     user.keys = await crypto.generateKeys();
 
     const createUser = await api.createUser({
-        publicKeys: user.keys.userPublicKeys,
+      publicKeys: user.keys.userPublicKeys,
     });
     user.userId = createUser.userId;
     api.setAuthHeader(user);
@@ -173,5 +173,5 @@ export const useFlowStore = defineStore('flow', () => {
 
   return { 
     createUser, prepareGroup, addUserToGroup, addOrUpdateUserInfo, teardown, handleGroupUpdate
-    }
+  }
 })

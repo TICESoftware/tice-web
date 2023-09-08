@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, h } from 'vue'
+import { ref, computed, h, onMounted } from 'vue'
 import GroupInfo from './GroupInfo.vue'
 import About from './About.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -44,18 +44,18 @@ const webViewOniOS = computed(() => {
   return /iphone|ipod|ipad/.test(ua)
 })
 
-await setLanguage(new Intl.Locale(navigator.language).language);
+onMounted(async () => {
+  await setLanguage(new Intl.Locale(navigator.language).language);
 
-if (window.location.pathname.length < 5) {
+  if (window.location.pathname.length < 5) {
     window.location.href = 'https://ticeapp.com'
-}
-const locsplit = window.location.pathname.split('/');
-if (locsplit.length < 3 || locsplit[1] !== 'group' || window.location.hash.length < 10) {
-  title.value = t('welcome.incorrectURL')
-  group.value = 'notFound';
-}
-
-if (group.value !== 'notFound') {
+  }
+  const locsplit = window.location.pathname.split('/');
+  if (locsplit.length < 3 || locsplit[1] !== 'group' || window.location.hash.length < 10) {
+    title.value = t('welcome.incorrectURL')
+    group.value = 'notFound';
+    return
+  }
   //     this.$tracking.screen('WelcomeBox', localStorage.getItem('tice.beekeeper.installday') === null ? 'NOCOOKIE' : 'WITHCOOKIE');
   try {
     log.debug('Opened WebApp')
@@ -68,7 +68,7 @@ if (group.value !== 'notFound') {
     user.value = await crypto.loadFromStorage(groupId);
     if (user.value !== null) {
       log.info('Found user data in cookie')
-        api.setAuthHeader(user.value);
+      api.setAuthHeader(user.value);
     } else {
       log.info('Creating new user')
       user.value = await flow.createUser()
@@ -80,7 +80,7 @@ if (group.value !== 'notFound') {
       if (['x', 's', 'z'].indexOf(ownerName.slice(-1)) > -1) {
         groupScoped.settings.name = t('welcome.groupName.s', { ownerName });
       } else {
-          groupScoped.settings.name = t('welcome.groupName', { ownerName });
+        groupScoped.settings.name = t('welcome.groupName', { ownerName });
       }
     }
 
@@ -90,8 +90,8 @@ if (group.value !== 'notFound') {
       emit('register-complete', { user: user.value, group: groupScoped });
       refl_dialogVisible.value = false;
     } else {
-        title.value = groupScoped.settings.name;
-        group.value = groupScoped;
+      title.value = groupScoped.settings.name;
+      group.value = groupScoped;
     }
   } catch (error) {
     if ((`${error}`).indexOf('Group not found') > -1) {
@@ -109,10 +109,10 @@ if (group.value !== 'notFound') {
     } else {
       log.error(`Error on WB-created: ${error}`)
       ElMessage({
-          type: 'error',
-          message: t('welcome.errorOccured') + error,
-          showClose: true,
-          duration: 0,
+        type: 'error',
+        message: t('welcome.errorOccured') + error,
+        showClose: true,
+        duration: 0,
       });
       title.value = t('welcome.error');
       group.value = 'error';
@@ -120,11 +120,12 @@ if (group.value !== 'notFound') {
   } finally {
     buttonLoading.value = false;
   }
-}
+})
 
 function openDeepLink() {
   window.open(window.location.href.replace('https://', 'tice://'));
 }
+
 async function start() {
   buttonLoading.value = true;
   if (group.value == null || typeof group.value === 'string') {
@@ -159,6 +160,7 @@ async function start() {
     buttonLoading.value = false;
   }
 }
+
 function showAbout() {
   ElMessageBox({
     title: t('about.title'),

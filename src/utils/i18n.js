@@ -14,14 +14,14 @@ export let timeagoLocale = enUS
 
 const loadedLanguages = ['en', 'de'];
 function setI18nLanguage(lang) {
-    i18n.global.locale.value = lang;
-    if (lang === 'de') {
-      timeagoLocale = de
-    } else {
-      timeagoLocale = enUS
-    }
-    // document.querySelector('html').setAttribute('lang', lang);
-    return lang;
+  i18n.global.locale.value = lang;
+  if (lang === 'de') {
+    timeagoLocale = de
+  } else {
+    timeagoLocale = enUS
+  }
+  // document.querySelector('html').setAttribute('lang', lang);
+  return lang;
 }
 
 export function setLanguage(lang) {

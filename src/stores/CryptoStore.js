@@ -322,148 +322,148 @@ export const useCryptoStore = defineStore('crypto', () => {
   }
 
   async function decryptPayloadContainer(envelope) {
-      let doubleRatchet = getDR(envelope.senderId, envelope.collapseId !== undefined);
-      if (envelope.conversationInvitation) {
-          const ciFingerprint = conversationInvitationFingerprint(envelope.conversationInvitation);
-          const lastConversationInvitation = getSeenConversationInvitations(envelope.senderId, envelope.collapseId !== undefined);
-          if (!lastConversationInvitation || (lastConversationInvitation.fingerprint !== ciFingerprint && lastConversationInvitation.timestamp < envelope.timestamp)) {
-              const identityKey = await dataFromBase64(envelope.conversationInvitation.identityKey);
-              const ephemeralKey = await dataFromBase64(envelope.conversationInvitation.ephemeralKey);
-              const usedOneTimePrekey = envelope.conversationInvitation.usedOneTimePrekey ? await dataFromBase64(envelope.conversationInvitation.usedOneTimePrekey) : undefined;
-              try {
-                  const sharedSecret = await handshake.sharedSecretFromKeyAgreement(info, identityKey, ephemeralKey, usedOneTimePrekey);
-                  saveHandshake();
-                  doubleRatchet = await DoubleRatchet.init(info, maxCache, maxSkip, sharedSecret, undefined, handshake.signedPrekeyPair());
-                  addOrUpdateDR(envelope.senderId, envelope.collapseId !== undefined, doubleRatchet);
-                  addSeenConversationInvitations(envelope.senderId, envelope.collapseId !== undefined, ciFingerprint, envelope.timestamp);
-              } catch (error) {
-                  Logger.warning("Couldn't get sharedSecret/DoubleRatchet init failed. Resetting.");
-                  return 'RESET';
-              }
-          }
-      }
-      if (!doubleRatchet) {
-          Logger.warning('No DR initiated, no conversation invitation. Resetting.');
-          return 'RESET';
-      }
-
-      // remove sending conversation invitations for this user to stop sending them
-      removeSendingConversationInvitation(envelope.senderId, envelope.collapseId !== undefined);
-
-      const rawMessage = JSON.parse(atob(envelope.payloadContainer.payload.encryptedKey));
-      const message = {
-          cipher: Uint8Array.from(rawMessage.cipher),
-          header: new Header(Uint8Array.from(rawMessage.header.publicKey), rawMessage.header.numberOfMessagesInPreviousSendingChain, rawMessage.header.messageNumber),
-      };
-      try {
-          const key64 = await base64EncodedString(await doubleRatchet.decrypt(message));
+    let doubleRatchet = getDR(envelope.senderId, envelope.collapseId !== undefined);
+    if (envelope.conversationInvitation) {
+      const ciFingerprint = conversationInvitationFingerprint(envelope.conversationInvitation);
+      const lastConversationInvitation = getSeenConversationInvitations(envelope.senderId, envelope.collapseId !== undefined);
+      if (!lastConversationInvitation || (lastConversationInvitation.fingerprint !== ciFingerprint && lastConversationInvitation.timestamp < envelope.timestamp)) {
+        const identityKey = await dataFromBase64(envelope.conversationInvitation.identityKey);
+        const ephemeralKey = await dataFromBase64(envelope.conversationInvitation.ephemeralKey);
+        const usedOneTimePrekey = envelope.conversationInvitation.usedOneTimePrekey ? await dataFromBase64(envelope.conversationInvitation.usedOneTimePrekey) : undefined;
+        try {
+          const sharedSecret = await handshake.sharedSecretFromKeyAgreement(info, identityKey, ephemeralKey, usedOneTimePrekey);
+          saveHandshake();
+          doubleRatchet = await DoubleRatchet.init(info, maxCache, maxSkip, sharedSecret, undefined, handshake.signedPrekeyPair());
           addOrUpdateDR(envelope.senderId, envelope.collapseId !== undefined, doubleRatchet);
-          const plaintext = await decryptSymmetric(key64, envelope.payloadContainer.payload.ciphertext);
-          return JSON.parse(plaintext);
-      } catch (error) {
-          Logger.warning("Couldn't decrypt message. Resetting.");
+          addSeenConversationInvitations(envelope.senderId, envelope.collapseId !== undefined, ciFingerprint, envelope.timestamp);
+        } catch (error) {
+          Logger.warning("Couldn't get sharedSecret/DoubleRatchet init failed. Resetting.");
           return 'RESET';
+        }
       }
+    }
+    if (!doubleRatchet) {
+      Logger.warning('No DR initiated, no conversation invitation. Resetting.');
+      return 'RESET';
+    }
+
+    // remove sending conversation invitations for this user to stop sending them
+    removeSendingConversationInvitation(envelope.senderId, envelope.collapseId !== undefined);
+
+    const rawMessage = JSON.parse(atob(envelope.payloadContainer.payload.encryptedKey));
+    const message = {
+      cipher: Uint8Array.from(rawMessage.cipher),
+      header: new Header(Uint8Array.from(rawMessage.header.publicKey), rawMessage.header.numberOfMessagesInPreviousSendingChain, rawMessage.header.messageNumber),
+  };
+    try {
+      const key64 = await base64EncodedString(await doubleRatchet.decrypt(message));
+      addOrUpdateDR(envelope.senderId, envelope.collapseId !== undefined, doubleRatchet);
+      const plaintext = await decryptSymmetric(key64, envelope.payloadContainer.payload.ciphertext);
+      return JSON.parse(plaintext);
+    } catch (error) {
+      Logger.warning("Couldn't decrypt message. Resetting.");
+      return 'RESET';
+    }
   }
   async function createSendMessageRequest(user, memberships, senderServerSignedMembershipCertificate, payloadContainer, messagePriority = 'deferred', collapsing = false) {
-      const { ciphertext, secretKey } = await encryptPayloadContainer(payloadContainer);
+    const { ciphertext, secretKey } = await encryptPayloadContainer(payloadContainer);
 
-      const recipientsPromises = memberships.filter((mbrshp) => mbrshp.userId !== user.userId).map(async (membership) => {
-          let doubleRatchet = getDR(membership.userId, collapsing);
-          let fulfillReset = false;
-          if (payloadContainer.payloadType === 'resetConversation/v1' && doubleRatchet !== undefined) {
-              const oldPubKey = doubleRatchet.publicKey().join('');
-              const milliseconds = Math.round(Math.random() * 3000);
-              await (new Promise((resolve) => setTimeout(resolve, milliseconds)));
-              doubleRatchet = getDR(membership.userId, collapsing);
-              if (oldPubKey === doubleRatchet.publicKey().join('')) {
-                  fulfillReset = true;
-              }
-          }
-          if (!doubleRatchet || fulfillReset) {
-              const userPublicKeys = await api.user(membership.userId).getPublicKeys();
-              const publicSigningKey = keyEncoder.encodePublic(atob(userPublicKeys.signingKey), 'pem', 'raw');
-              // TODO: guard membership.publicSigningKey == userPublicKeys.signingKey
-              const signaturePayload = await dataFromBase64(userPublicKeys.signedPrekey);
-
-              const keyAgreement = await handshake.initiateKeyAgreement({
-                  identityKey: await dataFromBase64(userPublicKeys.identityKey),
-                  signedPrekey: await dataFromBase64(userPublicKeys.signedPrekey),
-                  prekeySignature: await dataFromBase64(userPublicKeys.prekeySignature),
-                  oneTimePrekey: await dataFromBase64(userPublicKeys.oneTimePrekey),
-              }, (signature) => verify(publicSigningKey, signaturePayload, signature), info);
-
-              doubleRatchet = await DoubleRatchet.init(info, maxCache, maxSkip, keyAgreement.sharedSecret, await dataFromBase64(userPublicKeys.signedPrekey), handshake.signedPrekeyPair());
-              addOrUpdateDR(membership.userId, collapsing, doubleRatchet);
-              addSendingConversationInvitation(membership.userId, collapsing, { identityKey: await base64EncodedString(keyAgreement.identityPublicKey), ephemeralKey: await base64EncodedString(keyAgreement.ephemeralPublicKey), usedOneTimePrekey: await base64EncodedString(keyAgreement.usedOneTimePrekey) });
-          }
-          const encryptedMessageKey = await doubleRatchet.encrypt(secretKey);
-          addOrUpdateDR(membership.userId, collapsing, doubleRatchet);
-          encryptedMessageKey.cipher = Array.from(encryptedMessageKey.cipher);
-          encryptedMessageKey.header = { publicKey: Array.from(encryptedMessageKey.header.publicKey), numberOfMessagesInPreviousSendingChain: encryptedMessageKey.header.numberOfMessagesInPreviousSendingChain, messageNumber: encryptedMessageKey.header.messageNumber };
-          const encryptedMessageKey64 = btoa(JSON.stringify(encryptedMessageKey));
-
-          const conversationInvitation = getSendingConversationInvitation(membership.userId, collapsing);
-
-          const recipient = {
-              userId: membership.userId,
-              serverSignedMembershipCertificate: membership.serverSignedMembershipCertificate,
-              encryptedMessageKey: encryptedMessageKey64,
-          };
-          if (conversationInvitation) {
-              recipient.conversationInvitation = conversationInvitation;
-          }
-          return recipient;
-      });
-      const recipients = await Promise.all(recipientsPromises);
-
-      const request = {
-          id: generateUUID(),
-          senderId: user.userId,
-          timestamp: new Date(),
-          encryptedMessage: ciphertext,
-          serverSignedMembershipCertificate: senderServerSignedMembershipCertificate,
-          recipients,
-          priority: messagePriority,
-          messageTimeToLive: 1800.0,
-      };
-      if (collapsing) {
-          request.collapseId = sessionCollapseId;
+    const recipientsPromises = memberships.filter((mbrshp) => mbrshp.userId !== user.userId).map(async (membership) => {
+      let doubleRatchet = getDR(membership.userId, collapsing);
+      let fulfillReset = false;
+      if (payloadContainer.payloadType === 'resetConversation/v1' && doubleRatchet !== undefined) {
+        const oldPubKey = doubleRatchet.publicKey().join('');
+        const milliseconds = Math.round(Math.random() * 3000);
+        await (new Promise((resolve) => setTimeout(resolve, milliseconds)));
+        doubleRatchet = getDR(membership.userId, collapsing);
+        if (oldPubKey === doubleRatchet.publicKey().join('')) {
+          fulfillReset = true;
+        }
       }
-      return request;
+      if (!doubleRatchet || fulfillReset) {
+        const userPublicKeys = await api.user(membership.userId).getPublicKeys();
+        const publicSigningKey = keyEncoder.encodePublic(atob(userPublicKeys.signingKey), 'pem', 'raw');
+        // TODO: guard membership.publicSigningKey == userPublicKeys.signingKey
+        const signaturePayload = await dataFromBase64(userPublicKeys.signedPrekey);
+
+        const keyAgreement = await handshake.initiateKeyAgreement({
+          identityKey: await dataFromBase64(userPublicKeys.identityKey),
+          signedPrekey: await dataFromBase64(userPublicKeys.signedPrekey),
+          prekeySignature: await dataFromBase64(userPublicKeys.prekeySignature),
+          oneTimePrekey: await dataFromBase64(userPublicKeys.oneTimePrekey),
+        }, (signature) => verify(publicSigningKey, signaturePayload, signature), info);
+
+        doubleRatchet = await DoubleRatchet.init(info, maxCache, maxSkip, keyAgreement.sharedSecret, await dataFromBase64(userPublicKeys.signedPrekey), handshake.signedPrekeyPair());
+        addOrUpdateDR(membership.userId, collapsing, doubleRatchet);
+        addSendingConversationInvitation(membership.userId, collapsing, { identityKey: await base64EncodedString(keyAgreement.identityPublicKey), ephemeralKey: await base64EncodedString(keyAgreement.ephemeralPublicKey), usedOneTimePrekey: await base64EncodedString(keyAgreement.usedOneTimePrekey) });
+      }
+      const encryptedMessageKey = await doubleRatchet.encrypt(secretKey);
+      addOrUpdateDR(membership.userId, collapsing, doubleRatchet);
+      encryptedMessageKey.cipher = Array.from(encryptedMessageKey.cipher);
+      encryptedMessageKey.header = { publicKey: Array.from(encryptedMessageKey.header.publicKey), numberOfMessagesInPreviousSendingChain: encryptedMessageKey.header.numberOfMessagesInPreviousSendingChain, messageNumber: encryptedMessageKey.header.messageNumber };
+      const encryptedMessageKey64 = btoa(JSON.stringify(encryptedMessageKey));
+
+      const conversationInvitation = getSendingConversationInvitation(membership.userId, collapsing);
+
+      const recipient = {
+        userId: membership.userId,
+        serverSignedMembershipCertificate: membership.serverSignedMembershipCertificate,
+        encryptedMessageKey: encryptedMessageKey64,
+      };
+      if (conversationInvitation) {
+        recipient.conversationInvitation = conversationInvitation;
+      }
+      return recipient;
+    });
+    const recipients = await Promise.all(recipientsPromises);
+
+    const request = {
+      id: generateUUID(),
+      senderId: user.userId,
+      timestamp: new Date(),
+      encryptedMessage: ciphertext,
+      serverSignedMembershipCertificate: senderServerSignedMembershipCertificate,
+      recipients,
+      priority: messagePriority,
+      messageTimeToLive: 1800.0,
+    };
+    if (collapsing) {
+      request.collapseId = sessionCollapseId;
+    }
+    return request;
   }
 
   async function prepareGroupKey(groupKey) {
-      await _sodium.ready;
-      const sodium = _sodium;
-      let groupKeyData;
-      try {
-          groupKeyData = sodium.from_base64(groupKey);
-      } catch (err) {
-          groupKeyData = sodium.from_base64(groupKey, sodium.base64_variants.URLSAFE);
-      }
-      return base64EncodedString(groupKeyData);
+    await _sodium.ready;
+    const sodium = _sodium;
+    let groupKeyData;
+    try {
+      groupKeyData = sodium.from_base64(groupKey);
+    } catch (err) {
+      groupKeyData = sodium.from_base64(groupKey, sodium.base64_variants.URLSAFE);
+    }
+    return base64EncodedString(groupKeyData);
   }
 
   async function migrateStorage(gId) {
-      groupId = gId;
-      const oldUserData = localStorage.getItem('tice.user');
-      const oldHandshakeData = localStorage.getItem('tice.handshake');
-      const oldChatData = localStorage.getItem('tice.chat');
-      localStorage.removeItem('tice.user');
-      localStorage.removeItem('tice.handshake');
-      localStorage.removeItem('tice.chat');
-      if (oldUserData === null || oldHandshakeData === null) {
-          return;
-      }
-      Logger.debug('Migrating old user data');
-      localStorage.setItem(`tice.user.${groupId}`, oldUserData);
-      localStorage.setItem(`tice.handshake.${groupId}`, oldHandshakeData);
+    groupId = gId;
+    const oldUserData = localStorage.getItem('tice.user');
+    const oldHandshakeData = localStorage.getItem('tice.handshake');
+    const oldChatData = localStorage.getItem('tice.chat');
+    localStorage.removeItem('tice.user');
+    localStorage.removeItem('tice.handshake');
+    localStorage.removeItem('tice.chat');
+    if (oldUserData === null || oldHandshakeData === null) {
+      return;
+    }
+    Logger.debug('Migrating old user data');
+    localStorage.setItem(`tice.user.${groupId}`, oldUserData);
+    localStorage.setItem(`tice.handshake.${groupId}`, oldHandshakeData);
 
-      if (oldChatData !== null) {
-          Logger.debug('Migrating old chat data');
-          localStorage.setItem(`tice.chat.${groupId}`, oldChatData);
-      }
+    if (oldChatData !== null) {
+      Logger.debug('Migrating old chat data');
+      localStorage.setItem(`tice.chat.${groupId}`, oldChatData);
+    }
   }
 
       // eslint-disable-next-line no-shadow
@@ -472,7 +472,7 @@ export const useCryptoStore = defineStore('crypto', () => {
     const storedUserData = localStorage.getItem(`tice.user.${groupId}`);
     const storedHandshakeData = localStorage.getItem(`tice.handshake.${groupId}`);
     if (storedUserData === null || storedHandshakeData === null) {
-        return null;
+      return null;
     }
 
     const user = JSON.parse(storedUserData)._value;

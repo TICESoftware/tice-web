@@ -46,7 +46,6 @@ function updateShareLocationStatus() {
         <div id="shareLocationText">{{ shareLocationText }}</div>
         <div id="shareLocationSubText">{{ shareLocationSubText }}</div>
       </div>
-
     </el-button>
   </div>
 </template>

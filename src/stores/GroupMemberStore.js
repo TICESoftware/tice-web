@@ -59,12 +59,12 @@ export const useGroupMemberStore = defineStore('group', () => {
     const locationKeys = Object.keys(locations);
     locationKeys.forEach((key) => {
       if (memberIds.indexOf(key) === -1) {
-          delete locations[key];
+        delete locations[key];
       }
       const tenMinutesAgo = new Date();
       tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
       if (new Date(locations[key].timestamp) < tenMinutesAgo) {
-          delete locations[key];
+        delete locations[key];
       }
     });
     return locations;

@@ -40,9 +40,6 @@ app.mount('#app')
 // Vue.prototype.$alert = MessageBox.alert;
 // Vue.prototype.$message = Message;
 
-// import Chat from 'vue-beautiful-chat';
-// Vue.use(Chat);
-
 // import beekeeper from './utils/Beekeeper';
 // Vue.prototype.$tracking = beekeeper;
 // beekeeper.sessionStart(navigator.language);

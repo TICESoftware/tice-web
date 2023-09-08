@@ -52,18 +52,18 @@ const groupMemberNames = computed(() => {
 
 <style scoped>
 .groupinfo-title {
-    font-size: 11px;
-    text-transform: uppercase;
-    color:#999;
+  font-size: 11px;
+  text-transform: uppercase;
+  color:#999;
 }
 .groupinfo-body {
-    font-weight: bold;
+  font-weight: bold;
 }
 .groupinfo-body > span {
-    width:50%;
+  width:50%;
 }
 .el-button {
-    width: 100% !important;
-    margin-top:1em;
+  width: 100% !important;
+  margin-top:1em;
 }
 </style>
